@@ -513,7 +513,8 @@ class SynoFileHosting
         $pos = strpos($page, $Username);
 		
         $this->DebugMessage("DEBUG TypeAccount Pos Username", $this->coalesce_string($pos, 'No Username'));
-        
+        // si le nom d'utilisateur est trouvé dans la page 
+        // if username is found in page
         if($pos > 0)
         {
             
@@ -524,23 +525,39 @@ class SynoFileHosting
             $this->DebugMessage("DEBUG TypeAccount IndexURL", $queryUrl);
             $this->DebugMessage("DEBUG TypeAccount IndexHTML", $page);
             
-            // if((strpos($page, "Premium") > 0) || (strpos($page, "Access") > 0))
-			if( (strpos($page, "Premium offer Account") > 0) || (strpos($page, "Compte offre Premium") > 0) || (strpos($page, "Compte Access") > 0) || (strpos($page, "Access account") > 0) || (strpos($page, "Access offer Account") > 0) || (strpos($page, "Compte offre Access") > 0) || (strpos($page,"<div class=\"alc\">Compte Premium</div>")>0) || (strpos($page,"<div class=\"alc\">Premium account</div>")>0) )
-            {
-                
-				$ret = USER_IS_PREMIUM;
-            }
-            else
-            {
-                
-                if((strpos($page, "Free") > 0) || (strpos($page, "Gratuit") > 0))
-                {
-                    if ($this->HaveCDN()===true) $ret = USER_IS_PREMIUM;
-					else $ret = USER_IS_FREE;
+            do {
+                // Itération sur les variation de patterns à rechercher pour définir si c'est un compte premium
+                // Liste évolutive. 
+                // Loop on each possible patterns to detect if the account is "premium"
+                // The list will be completed to follow 1fichier html structure.
+                foreach(array(
+                    "Premium offer Account",
+                    "Compte offre Premium",
+                    "Access offer Account",
+                    "Compte offre Access",
+                    "<div class=\"alc\">Compte Premium</div>",
+                    "<div class=\"alc\">Premium account</div>",
+                    "Access account",
+                    "Compte Access"
+                ) as $account_type_pattern) {
+                    if (strpos($page,$account_type_pattern) > 0) {
+                        $ret = USER_IS_PREMIUM;
+                        break 2;        
+                    }
                 }
-            }
 			
-			switch($ret)
+                
+                if( ( strpos($page, "Free") > 0) || (strpos($page, "Gratuit") > 0 ) )
+                {
+                    if (true === $this->HaveCDN()) {
+                        $ret = USER_IS_PREMIUM;
+                        break;
+                    } 
+					$ret = USER_IS_FREE;
+                }
+            }while(false);
+        }
+        switch($ret)
 			{
 				case USER_IS_FREE:
 					$this->DebugMessage("DEBUG TypeAccount Type : FREE");
@@ -552,7 +569,6 @@ class SynoFileHosting
 					$this->DebugMessage("DEBUG TypeAccount Type : Login Fail");
 					break;
 			}
-        }
         
         return $ret;
     }
@@ -591,8 +607,7 @@ class SynoFileHosting
         return $ret;
     }
     
-    /*créé une URL propre qui permettra de l'utiliser correctement
-     */
+    /*créé une URL propre qui permettra de l'utiliser correctement */
     private function MakeUrl()
     {
         $this->DebugMessage("DEBUG MakeUrl function");
