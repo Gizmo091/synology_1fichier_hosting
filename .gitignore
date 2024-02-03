@@ -1,4 +1,4 @@
-*.host
+#*.host
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/linux,macos,visualstudiocode,phpstorm,windows
