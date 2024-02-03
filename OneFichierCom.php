@@ -190,7 +190,7 @@ class SynoFileHosting
             $realUrl = $result[0];
             
             preg_match($this->PREMIUM_REAL_URL_REGEX,$realUrl,$urlmatch);
-            
+        
 			$DownloadInfo[INFO_NAME] = $result[1];
 			
             if(!empty($urlmatch[0]))
