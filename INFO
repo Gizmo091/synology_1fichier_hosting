@@ -1,0 +1,10 @@
+{ 
+"name": "OneFichierCom", 
+"hostprefix": "1fichier.com", 
+"displayname": "1fichier", 
+"version": "3.2.6", 
+"authentication": "yes", 
+"module": "OneFichierCom.php", 
+"class": "SynoFileHosting", 
+"description": "Free, CDN, Access or premium account" 
+} 

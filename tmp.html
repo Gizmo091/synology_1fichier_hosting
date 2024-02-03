@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html lang="fr" style="height:100%;min-height:700px;width:100%;min-width:980px">
+<head>
+	<title>1fichier.com: Cloud Storage</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8">
+	<link rel="shortcut icon" href="https://img.1fichier.com/favicon.ico" />
+	<link rel="icon" type="image/x-icon" href="https://img.1fichier.com/favicon.ico" />
+	<link rel="icon" type="image/png" href="https://img.1fichier.com/favicon.png" />
+	<link rel="apple-touch-icon" href="https://img.1fichier.com/favicon.png" />
+	<link rel="image_src" href="https://img.1fichier.com/favicon.png" />
+	<link rel="stylesheet" type="text/css" href="https://img.1fichier.com/css/style.css" />
+	<link rel="stylesheet" type="text/css" href="https://img.1fichier.com/css/jquery.ui.css" />
+	<link href="https://img.1fichier.com/css/jqueryFileTree.css" rel="stylesheet" type="text/css" media="screen">
+	<script type="text/javascript" src="https://img.1fichier.com/js/jquery.js"></script>
+	<script type="text/javascript" src="https://img.1fichier.com/js/jqueryFileTree.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<script type="text/javascript">
+		jQuery(document).ready(function($) {
+			$(document).tooltip({ position: { my: "center bottom-20", at: "center top", using: function( position, feedback ) { $(this).css(position); $("<div>").addClass("arrow").addClass(feedback.vertical).addClass(feedback.horizontal).appendTo(this); }}});
+			
+			
+			$('#msmall').click(function() { 
+					$('div.leftside-small').show( { 'start': $('div.leftside').hide()});  $('div.rightside').css({"minWidth": $(window).width()-70}); 
+					$(window).resize();  
+					document.cookie = "lsmall=1; expires=Mon, 20 May 2034 10:10:00 GMT; path=/";
+					return false; 
+			});
+			$('#mfull').click(function() { $('div.leftside').show({ 'start': $('div.leftside-small').hide()});  $('div.rightside').css({"minWidth": $(window).width()-210}); 
+				$(window).resize();  
+				document.cookie = "lsmall=; path=/";
+				return false; 
+			});
+		});
+	</script>
+</head>
+<body style="height:100%;min-height:800px;width:100%;min-width:980px">
+
+	<div class="leftside"  >
+		<span class="spacer spacer-20"></span>
+		<a href="https://1fichier.com" title="Retour à l'accueil"><img class="logo" src="https://img.1fichier.com/logo-frontoffice.png" /></a>
+		<span class="spacer spacer-20"></span>
+		<a href="https://1fichier.com/console/index.pl" class="menu selected"><img src="https://img.1fichier.com/icons/ico-menu-mes-fichiers.png" alt="" /> Mes fichiers</a>
+		<a href="https://1fichier.com/console/ftpmode.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-publication-ftp.png" alt="" /> Gestion FTP</a>
+		<a href="https://1fichier.com/console/remote.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-telechargement-de-liens.png" alt="" /> Remote Upload</a>
+		<a href="https://1fichier.com/console/details.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-mon-profil.png" alt="" /> Mon profil</a>
+		<a href="https://1fichier.com/console/params.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-parametres-du-compte.png" alt="" /> Paramètres</a>
+		<a href="https://1fichier.com/console/abo.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-abonnement.png" alt="" /> Premium</a>
+    <a href="https://1fichier.com/console/cs.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-cs.png" alt="" /> Cold Storage</a>
+    <a href="https://1fichier.com/console/cdn.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-cdn.png" alt="" /> CDN</a>    
+		
+		<a href="https://1fichier.com/console/aff.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-affiliation.png" alt="" /> Affiliation</a>
+		<a href="https://1fichier.com/console/com.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-voucher-buy.png" alt="" /> Vouchers: Achat</a>
+    <a href="https://1fichier.com/console/vu.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-voucher-use.png" alt="" /> Vouchers: Activation</a>
+		<a href="https://1fichier.com/console/logs.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-logs.png" alt="" /> Journaux</a>
+		<a href="https://1fichier.com/logout.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-deconnexion.png" alt="" /> Déconnexion</a>
+		<span class="spacer spacer-20"></span>
+		<a href="#" id="msmall"><img src="https://img.1fichier.com/btns/menu-toggler-reverse.png"></a>
+	</div>
+
+	<div class="leftside-small" style="display:none" >
+		<span class="spacer spacer-20"></span>
+		<a href="https://1fichier.com" title="Retour à l'accueil"><img src="https://img.1fichier.com/favicon.png" width="40" height="40" /></a>
+		<span class="spacer spacer-20"></span>
+		<a href="https://1fichier.com/console/index.pl" class="menu selected"><img src="https://img.1fichier.com/icons/ico-menu-mes-fichiers.png" alt="" title="Mes fichiers" /></a>
+		<a href="https://1fichier.com/console/ftpmode.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-publication-ftp.png" alt="" title="Gestion & publication FTP" /></a>
+		<a href="https://1fichier.com/console/remote.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-telechargement-de-liens.png" alt="" title="Téléchargement de liens (Remote Upload)" /></a>
+		<a href="https://1fichier.com/console/details.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-mon-profil.png" alt="" title="Mon profil" /></a>
+		<a href="https://1fichier.com/console/params.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-parametres-du-compte.png" alt="" title="Paramètres du compte" /></a>
+		<a href="https://1fichier.com/console/abo.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-abonnement.png" alt="Premium" title="Premium"  /></a>
+    <a href="https://1fichier.com/console/cs.pl" class="menu "><img src="https://img.1fichier.com/icons/ico-cs.png" alt="" title="Cold Storage" /></a>
+    <a href="https://1fichier.com/console/cdn.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-cdn.png" alt="" title="CDN" /></a>
+		
+		<a href="https://1fichier.com/console/aff.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-affiliation.png" alt="" title="Affiliation" /></a>
+		<a href="https://1fichier.com/console/com.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-voucher-buy.png" alt="" title="Vouchers: Achat" /></a>
+    <a href="https://1fichier.com/console/vu.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-voucher-use.png" alt="" title="Vouchers: Activation" /></a>
+		<a href="https://1fichier.com/console/logs.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-logs.png" alt="" title="Journaux" /></a>
+		<a href="https://1fichier.com/logout.pl" class="menu"><img src="https://img.1fichier.com/icons/ico-menu-deconnexion.png" alt="" title="Déconnexion" /></a>
+		<span class="spacer spacer-20"></span>
+		<a href="#" id="mfull"><img src="https://img.1fichier.com/btns/menu-toggler.png" title="Revenir au menu élargi" /></a>
+	</div>
+
+	<div class="rightside">
+		<div class="bloc" style="margin:10px">
+			<div class="droite">
+				<img alt="Recherche" src="https://img.1fichier.com/btns/recherche.png" style="padding-right:5px;vertical-align:top;cursor:pointer" class="search_box" />
+				<input class="input-text search_box n1" type="text" name="search" value="" placeholder="Recherche..." maxlength="240" title="Recherche" style="height:35px;vertical-align:top" />
+			</div>
+
+			<div style="position:absolute;left:160px;width:425px">
+				<div style="text-align:center;font-weight:700;font-size:15px">mathieu.vedie@gmail.com</div>
+				<div class="alc">Compte Premium</div>
+			</div>
+
+			
+				<h1>Mes Fichiers</h1>
+			
+			
+				<span>Aucun fichier stocké</span>
+			
+	</div>
+
+<span class="spacer spacer-5"></span>
+
+<div class="ddemo" id="dirTree">
+	<div>G</div>
+</div>
+
+<div class="fdemo" id="fileTree">
+	<div>Si ce message ne disparait pas, cela signifie que la page ne se charge pas correctement.<br/>Merci de reessayer en desactivant tout plugin de type Adblock</div>
+</div>
+	<span class="spacer spacer-20"></span>
+</div>
+<div style="display:none;text-align:center;padding:20px;margin:auto" id="dialog-message">
+	&nbsp;
+</div>
+<div id="footer">
+	<div class="center-container">
+		<a href="https://1fichier.com" title="Retour à la page d'accueil"><img class="gauche" src="https://img.1fichier.com/logo-footer.png" alt="1fichier.com" /></a>
+		<div id="link-container">
+			<a href="https://1fichier.com/cgu.html">L&eacute;gal &amp; Conditions</a>&nbsp;&nbsp;&nbsp;
+			<a href="https://1fichier.com/abus.html">Signaler un contenu</a>&nbsp;&nbsp;&nbsp;
+			<a href="https://1fichier.com/tarifs.html">Tarifs</a>&nbsp;&nbsp;&nbsp;
+			<a href="https://1fichier.com/revendeurs.html">Revendeurs</a>&nbsp;&nbsp;&nbsp;
+			<a href="https://1fichier.com/hlp.html">Aide</a>&nbsp;&nbsp;&nbsp;
+			<a href="https://1fichier.com/network.html">Speedtest</a>&nbsp;&nbsp;&nbsp;
+			<a href="https://1fichier.com/contact.html">Contact</a>
+			<br/>
+			<a target="_new" href="https://twitter.com/1fichiercom"><img src="https://img.1fichier.com/twitter.png" alt="Twitter" style="padding:0;border:0" /></a>&nbsp;&nbsp;&nbsp;
+			<a target="_new" href="https://facebook.com/1fichiercom"><img src="https://img.1fichier.com/facebook.png" alt="Facebook" style="padding:0;border:0" /></a>&nbsp;&nbsp;&nbsp;
+			<a href="https://1fichier.com/api.html" style="vertical-align:top">API</a>&nbsp;&nbsp;&nbsp;
+			<a target="_new" href="https://dstorage.fr" style="vertical-align:top">DStorage SASU &copy; 2009-2024</a>
+		</div>
+	</div>
+	<span class="spacer"></span>
+</div>       
+
+</body>
+</html>
