@@ -3,7 +3,7 @@
 /*
 	@auteur : warkx
 	@version originale Developpé le : 23/11/2013
-	@Version : 3.2.7 (modifié par zmog)
+	@Version : 3.2.8 (modifié par zmog)
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 	
@@ -477,7 +477,7 @@ class SynoFileHosting
         if(!isset($errormatch[0]))
         {
             $result = explode(';', $page);
-            if ( trim($result[3]) == 'PRIVATE' ) { $ret = 'Private file'; } else { $ret = $result[1]; }
+            if ( isset($result[3]) && trim($result[3]) == 'PRIVATE' ) { $ret = 'Private file'; } else { $ret = $result[1]; }
         }
         
         $this->DebugMessage("DEBUG CheckLink FileName", $this->coalesce_string($ret));
