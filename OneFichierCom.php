@@ -6,6 +6,8 @@
 	@Version : 3.2.9
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
+
+    Module are installed in /var/packages/DownloadStation/etc/download/userhosts on the Synology
 	
 	Packaging by => tar zcf "OneFichierCom_X.host" INFO OneFichierCom.php
     Update : 
@@ -643,12 +645,13 @@ class SynoFileHosting
 			
 			if ( $this->ENABLE_DEBUG_HTML == true )
 			{
-				if ( strlen($data) > 100 )
+				if ( strpos($data,'</head>') > 0 )
 				{
-					$myfile_html = fopen($this->LOG_DIR . $this->LOG_DIR_HTML . date_format($now,'Y-m-d-H-i-s-u') .'.html', "a");
+                    $html_file_path = $this->LOG_DIR . '1fichier_' . date_format($now,'Y-m-d-H-i-s-u') .'.html';
+					$myfile_html = fopen($html_file_path, "a");
 					fwrite($myfile_html, $data);
 					fclose($myfile_html);
-					$data = 'Contenu HTML'; 
+					$data = 'Contenu HTML > '.$html_file_path; 
 				}
 			}
 			elseif ($pos === false ) { $data = $data; } 
@@ -716,7 +719,7 @@ class SynoFileHosting
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
 		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, DOWNLOAD_TIMEOUT);
 		curl_setopt($curl, CURLOPT_TIMEOUT, DOWNLOAD_TIMEOUT);
-		// curl_setopt($curl, CURLOPT_USERAGENT, DOWNLOAD_STATION_USER_AGENT);
+		curl_setopt($curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36");
 		if (NULL != $Option) {
 			if (!empty($Option['CURL_OPTION_POSTDATA'])) {
 				$PostData = http_build_query($Option['CURL_OPTION_POSTDATA']);
@@ -749,6 +752,7 @@ class SynoFileHosting
 		$ret = $curl;
 		return $ret;
 	}
+
 	
 	private function debug_curl ( $curl )
 	{
@@ -774,8 +778,10 @@ class SynoFileHosting
 		{ $ret_dl = $default_string; } 
 		else 
 		{ $ret_dl = $string; }
+        
 		return $ret_dl;
 	}
+
+    
 }
 ?>
- 
