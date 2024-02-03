@@ -3,14 +3,14 @@
 /*
 	@auteur : warkx
 	@version originale Developpé le : 23/11/2013
-	@Version : 3.2.8 (modifié par zmog)
+	@Version : 3.2.9
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 	
 	Packaging by => tar zcf "OneFichierCom_X.host" INFO OneFichierCom.php
     Update : 
-    - 2024-02-03 : Ajout de la version anglaise du controle du 2024-02-02
-    - 2024-02-02 : Ajout d'un test pour verifier que le compte est premium.
+    - 3.2.8 : Ajout de la version anglaise du controle du 2024-02-02
+    - 3.2.7 : Ajout d'un test pour verifier que le compte est premium.
  */
 
 class SynoFileHosting
@@ -190,7 +190,7 @@ class SynoFileHosting
             $realUrl = $result[0];
             
             preg_match($this->PREMIUM_REAL_URL_REGEX,$realUrl,$urlmatch);
-        
+            
 			$DownloadInfo[INFO_NAME] = $result[1];
 			
             if(!empty($urlmatch[0]))
@@ -525,7 +525,7 @@ class SynoFileHosting
             $this->DebugMessage("DEBUG TypeAccount IndexHTML", $page);
             
             // if((strpos($page, "Premium") > 0) || (strpos($page, "Access") > 0))
-			if( (strpos($page, "Premium offer Account") > 0) || (strpos($page, "Compte offre Premium") > 0) || (strpos($page, "Access offer Account") > 0) || (strpos($page, "Compte offre Access") > 0) || (strpos($page,"<div class=\"alc\">Compte Premium</div>")>0) || (strpos($page,"<div class=\"alc\">Premium account</div>")>0) )
+			if( (strpos($page, "Premium offer Account") > 0) || (strpos($page, "Compte offre Premium") > 0) || (strpos($page, "Compte Access") > 0) || (strpos($page, "Access account") > 0) || (strpos($page, "Access offer Account") > 0) || (strpos($page, "Compte offre Access") > 0) || (strpos($page,"<div class=\"alc\">Compte Premium</div>")>0) || (strpos($page,"<div class=\"alc\">Premium account</div>")>0) )
             {
                 
 				$ret = USER_IS_PREMIUM;
