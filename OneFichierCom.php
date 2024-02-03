@@ -524,7 +524,6 @@ class SynoFileHosting
             $this->DebugMessage("DEBUG TypeAccount IndexURL", $queryUrl);
             $this->DebugMessage("DEBUG TypeAccount IndexHTML", $page);
             
-            file_put_contents(__DIR__.'/tmp.html',$page);
             // if((strpos($page, "Premium") > 0) || (strpos($page, "Access") > 0))
 			if( (strpos($page, "Premium offer Account") > 0) || (strpos($page, "Compte offre Premium") > 0) || (strpos($page, "Access offer Account") > 0) || (strpos($page, "Compte offre Access") > 0) || (strpos($page,"<div class=\"alc\">Compte Premium</div>")>0) || (strpos($page,"<div class=\"alc\">Premium account</div>")>0) )
             {
