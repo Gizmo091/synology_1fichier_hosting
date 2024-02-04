@@ -14,6 +14,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update : 
+    - 4.0.1 : Utilisation du password pour l'apikey et non le username
     - 4.0.0 : Attention, version utilisant l'API donc reservé au premium/access
     - 3.2.8 : Ajout de la version anglaise du controle du 2024-02-02
     - 3.2.7 : Ajout d'un test pour verifier que le compte est premium.
@@ -24,13 +25,10 @@ class SynoFileHosting
     private $Url;
     private $apikey;
 
-    public function __construct($Url, $Username, $Password, $HostInfo)
+    public function __construct($Url, $Username, $apikey, $HostInfo)
     {
         $this->Url = explode('&',$Url)[0];
-        $this->apikey = $Username;
-        // password never used 
-        //$this->Password = $Password;
-        //$this->HostInfo = $HostInfo;
+        $this->apikey = $apikey;
     }
 	
     //fonction a executer pour recuperer les informations d'un fichier en fonction d'un lien
