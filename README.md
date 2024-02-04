@@ -16,4 +16,4 @@ Or using docker environment (from CLI) :
 bash build_with_docker.sh
 ```
 
-Use the OneFichierCom(<version>).host generated.
+Use the OneFichierCom(\<version\>).host generated.
