@@ -1,5 +1,9 @@
 Repo for 1fichier hosting file usable in DL Station Synology Application
 
+# WARNING 
+
+Since release 4.0.0 the package is only usable by premium accounts due to API usage restrictions
+
 # HOW TO BUILD 
 
 Directly from CLI : 
