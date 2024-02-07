@@ -155,7 +155,6 @@ class SynoFileHosting
         $this->writeLog(__FUNCTION__,'Debut de la methode : ',['parameters'=>[
             'ClearCookie'=>$ClearCookie,
         ]]);
-        sleep(3);
         $typeaccount_return = $this->TypeAccount($this->apikey);
         $this->writeLog(__FUNCTION__,'Fin de la methode : ',['return'=>$typeaccount_return]);
         return $typeaccount_return;
