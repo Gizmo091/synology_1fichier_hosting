@@ -2,7 +2,11 @@
 
 /*
     @author : Mathieu Vedie
+<<<<<<< HEAD
 	@Version : 4.0.3
+=======
+	@Version : 4.0.4
+>>>>>>> f16ef9a3b3682fc552c2aa637cc14ed0c4660601
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -14,7 +18,11 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update : 
+<<<<<<< HEAD
     - 4.0.3 : Ajoute la possibilité de surcharger le dossier de log via le username
+=======
+    - 4.0.4 : Ajout de la possibilité d'envoyer les logs sur un serveur externe ( pour aider au debug )
+>>>>>>> f16ef9a3b3682fc552c2aa637cc14ed0c4660601
     - 4.0.2 : Ajout de logs pour debuger
     - 4.0.1 : Utilisation du password pour l'apikey et non le username
     - 4.0.0 : Attention, version utilisant l'API donc reservé au premium/access
@@ -31,6 +39,10 @@ class SynoFileHosting
 
     private $log_dir;
     private $log_id; 
+
+    private $conf_remote_log = null;
+    private $conf_cli_log = null;
+    
 
     public function callApi(string $endpoint, mixed $data) {
         // pause entre les appels curl pour eviter le blockage
@@ -70,12 +82,30 @@ class SynoFileHosting
      */
     public function __construct($Url, $Username, $apikey, $HostInfo)
     {
+<<<<<<< HEAD
         $this->log_dir = static::LOG_DIR;
         $this->Username = $Username;
         if (file_exists($this->Username) && is_dir($this->Username)) {
             $this->log_dir = $this->Username.DIRECTORY_SEPARATOR.'1fichier_dot_com';
         }
         $this->cleanLog();
+=======
+        // parsing des conf que l'on peut passer dans le username
+        $configs = array_map(function($param_couple) {
+            if (strpos($param_couple,'=') < 0) {
+                return null;
+            }
+            return explode('=',$param_couple,2);
+        },explode(';',$Username));
+        $configs = array_filter($configs);
+        $configs = array_combine(array_column($configs,0),array_column($configs,1));
+        foreach($configs as $key => $value) {
+            $this->{"conf_$key"} = $value;
+        }
+
+
+        static::cleanLog();
+>>>>>>> f16ef9a3b3682fc552c2aa637cc14ed0c4660601
         // retire tout ce qui vient en plus du lien de téléchargement strict. 
         // exemple : $Url       = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6&af=3601079"
         //           $this->Url = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6"
@@ -208,19 +238,67 @@ class SynoFileHosting
     }
 
     
+<<<<<<< HEAD
     public function writeLog(string $function,string $message,mixed $data = null) {
         if (!file_exists($this->log_dir)) {
             if (!mkdir($this->log_dir, 0755, true)) {
+=======
+    private function writeLog(string $function,string $message,mixed $data = null) {
+        $date = (new DateTime())->format(DATE_RFC3339_EXTENDED);
+        $row1 = "$date : $function : Message :  $message".PHP_EOL;
+        $row2 = "$date : $function : Data : ".serialize($data).PHP_EOL;
+        if (null !== $this->conf_cli_log) {
+            echo $row1;
+            echo $row2;
+        }
+        if ($this->conf_remote_log !== null) {
+            $this->writeRemoteLog($row1,$row2);
+            return;
+        }   
+        $this->writeLocalLog($row1,$row2);
+    }
+
+    private function writeRemoteLog(string $row1, string $row2) {
+        // pause entre les appels curl pour eviter le blockage
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => $this->conf_remote_log,
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => '',
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 2,
+          CURLOPT_FOLLOWLOCATION => true,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => 'POST',
+          CURLOPT_POSTFIELDS =>json_encode(['row1'=>$row1,'row2'=>$row2]),
+          CURLOPT_HTTPHEADER => array(
+            'Content-Type: application/json',
+            'User-Agent: OneFichierCom/Synology'
+          ),
+        ));
+        curl_exec($curl);
+        curl_close($curl);
+    }
+
+    private function writeLocalLog(string $row1, string $row2) {
+        if (!file_exists(static::LOG_DIR)) {
+            if (!mkdir(static::LOG_DIR, 0755, true)) {
+>>>>>>> f16ef9a3b3682fc552c2aa637cc14ed0c4660601
                 // on sort si on ne peut pas créer le repertoire de log
                 return;
             }
         }
         // définition du fichier de log
+<<<<<<< HEAD
         $log_path = $this->log_dir.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
         $date = (new DateTime())->format(DATE_RFC3339_EXTENDED);
+=======
+        $log_path = static::LOG_DIR.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
+            
+>>>>>>> f16ef9a3b3682fc552c2aa637cc14ed0c4660601
         // écritue de deux ligne de log, une avec le message et une avec les datas
-        file_put_contents($log_path,"$date : $function : Message :  $message".PHP_EOL,FILE_APPEND);
-        file_put_contents($log_path,"$date : $function : Data : ".serialize($data).PHP_EOL,FILE_APPEND);
+        file_put_contents($log_path,$row1,FILE_APPEND);
+        file_put_contents($log_path,$row2,FILE_APPEND);
     }
 
     /**
