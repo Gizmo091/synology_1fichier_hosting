@@ -139,12 +139,14 @@ class SynoFileHosting
             return [DOWNLOAD_ERROR => ERR_UNKNOWN];
         }
 
-        $this->writeLog(__FUNCTION__,'Fin de la methode sans erreur : ',['return'=>[DOWNLOAD_ERROR => ERR_UNKNOWN]]);
-        return [
+        
+        $return = [
             INFO_NAME => $data['filename'],
             DOWNLOAD_ISPARALLELDOWNLOAD => true,
             DOWNLOAD_URL => $download_url
-        ];
+        ]; 
+        $this->writeLog(__FUNCTION__,'Fin de la methode sans erreur : ',['return'=>$return]);
+        return $return;
 
         
     }
