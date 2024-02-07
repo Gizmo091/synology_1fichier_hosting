@@ -2,11 +2,7 @@
 "name": "OneFichierCom", 
 "hostprefix": "1fichier.com", 
 "displayname": "1fichier", 
-<<<<<<< HEAD
-"version": "4.0.3", 
-=======
 "version": "4.0.4", 
->>>>>>> f16ef9a3b3682fc552c2aa637cc14ed0c4660601
 "authentication": "yes", 
 "module": "OneFichierCom.php", 
 "class": "SynoFileHosting", 
