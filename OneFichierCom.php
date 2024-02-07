@@ -2,7 +2,7 @@
 
 /*
     @author : Mathieu Vedie
-	@Version : 4.0.2
+	@Version : 4.0.4
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -14,6 +14,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update : 
+    - 4.0.4 : Ajout de la possibilité d'envoyer les logs sur un serveur externe ( pour aider au debug )
     - 4.0.2 : Ajout de logs pour debuger
     - 4.0.1 : Utilisation du password pour l'apikey et non le username
     - 4.0.0 : Attention, version utilisant l'API donc reservé au premium/access
@@ -25,9 +26,15 @@ class SynoFileHosting
 {
     const LOG_DIR = '/tmp/1fichier_dot_com';
     private $Url;
+    private $Username;
     private $apikey;
 
+    private $log_dir;
     private $log_id; 
+
+    private $conf_remote_log = null;
+    private $conf_cli_log = null;
+    
 
     public function callApi(string $endpoint, mixed $data) {
         // pause entre les appels curl pour eviter le blockage
@@ -67,7 +74,20 @@ class SynoFileHosting
      */
     public function __construct($Url, $Username, $apikey, $HostInfo)
     {
-        static::cleanLog();
+        // parsing des conf que l'on peut passer dans le username
+        $configs = array_map(function($param_couple) {
+            if (strpos($param_couple,'=') < 0) {
+                return null;
+            }
+            return explode('=',$param_couple,2);
+        },explode(';',$Username));
+        $configs = array_filter($configs);
+        $configs = array_combine(array_column($configs,0),array_column($configs,1));
+        foreach($configs as $key => $value) {
+            $this->{"conf_$key"} = $value;
+        }
+
+
         // retire tout ce qui vient en plus du lien de téléchargement strict. 
         // exemple : $Url       = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6&af=3601079"
         //           $this->Url = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6"
@@ -200,27 +220,66 @@ class SynoFileHosting
     }
 
     
-    public function writeLog(string $function,string $message,mixed $data = null) {
+
+    private function writeLog(string $function,string $message,mixed $data = null) {
+        $date = (new DateTime())->format(DATE_RFC3339_EXTENDED);
+        $row1 = "$date : $function : Message :  $message".PHP_EOL;
+        $row2 = "$date : $function : Data : ".serialize($data).PHP_EOL;
+        if (null !== $this->conf_cli_log) {
+            echo $row1;
+            echo $row2;
+        }
+        if ($this->conf_remote_log !== null) {
+            $this->writeRemoteLog($row1,$row2);
+            return;
+        }   
+        $this->writeLocalLog($row1,$row2);
+    }
+
+    private function writeRemoteLog(string $row1, string $row2) {
+        // pause entre les appels curl pour eviter le blockage
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => $this->conf_remote_log,
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => '',
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 2,
+          CURLOPT_FOLLOWLOCATION => true,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => 'POST',
+          CURLOPT_POSTFIELDS =>json_encode(['row1'=>$row1,'row2'=>$row2]),
+          CURLOPT_HTTPHEADER => array(
+            'Content-Type: application/json',
+            'User-Agent: OneFichierCom/Synology'
+          ),
+        ));
+        curl_exec($curl);
+        curl_close($curl);
+    }
+
+    private function writeLocalLog(string $row1, string $row2) {
         if (!file_exists(static::LOG_DIR)) {
             if (!mkdir(static::LOG_DIR, 0755, true)) {
                 // on sort si on ne peut pas créer le repertoire de log
                 return;
             }
         }
+        $this->cleanLog();
         // définition du fichier de log
         $log_path = static::LOG_DIR.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
-        $date = (new DateTime())->format(DATE_RFC3339_EXTENDED);
+            
         // écritue de deux ligne de log, une avec le message et une avec les datas
-        file_put_contents($log_path,"$date : $function : Message :  $message".PHP_EOL,FILE_APPEND);
-        file_put_contents($log_path,"$date : $function : Data : ".serialize($data).PHP_EOL,FILE_APPEND);
+        file_put_contents($log_path,$row1,FILE_APPEND);
+        file_put_contents($log_path,$row2,FILE_APPEND);
     }
 
     /**
      * Fonction pour supprimer les fichiers logs qui sont trop anciens. 
      * Est appelé à chaque fois que le constructeur de cette classe est appelé. 
      */
-    public static function cleanLog() {
-        $log_file_a = scandir(static::LOG_DIR);
+    public function cleanLog() {
+        $log_file_a = scandir($this->log_dir);
         // on defini le timestamp au dela du quel on supprime les logs. 
         // ici : tout ce qui à plus de 1 jours ( 24 x 3600 secondes )
         $timestamp_max = time() - 3600*24;
@@ -228,7 +287,7 @@ class SynoFileHosting
             if ($log_file == '.'|| $log_file == '..') {
                 continue;
             }
-            $log_file = static::LOG_DIR.DIRECTORY_SEPARATOR.$log_file;
+            $log_file = $this->log_dir.DIRECTORY_SEPARATOR.$log_file;
             $filemtime = filemtime($log_file);
             if ( $filemtime < $timestamp_max) {
                 unlink($log_file);
