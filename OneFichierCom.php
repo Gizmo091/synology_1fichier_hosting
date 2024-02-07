@@ -2,7 +2,7 @@
 
 /*
     @author : Mathieu Vedie
-	@Version : 4.0.2
+	@Version : 4.0.3
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -14,6 +14,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update : 
+    - 4.0.3 : Ajoute la possibilité de surcharger le dossier de log via le username
     - 4.0.2 : Ajout de logs pour debuger
     - 4.0.1 : Utilisation du password pour l'apikey et non le username
     - 4.0.0 : Attention, version utilisant l'API donc reservé au premium/access
@@ -25,8 +26,10 @@ class SynoFileHosting
 {
     const LOG_DIR = '/tmp/1fichier_dot_com';
     private $Url;
+    private $Username;
     private $apikey;
 
+    private $log_dir;
     private $log_id; 
 
     public function callApi(string $endpoint, mixed $data) {
@@ -67,7 +70,12 @@ class SynoFileHosting
      */
     public function __construct($Url, $Username, $apikey, $HostInfo)
     {
-        static::cleanLog();
+        $this->log_dir = static::LOG_DIR;
+        $this->Username = $Username;
+        if (file_exists($this->Username) && is_dir($this->Username)) {
+            $this->log_dir = $this->Username.DIRECTORY_SEPARATOR.'1fichier_dot_com';
+        }
+        $this->cleanLog();
         // retire tout ce qui vient en plus du lien de téléchargement strict. 
         // exemple : $Url       = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6&af=3601079"
         //           $this->Url = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6"
@@ -201,14 +209,14 @@ class SynoFileHosting
 
     
     public function writeLog(string $function,string $message,mixed $data = null) {
-        if (!file_exists(static::LOG_DIR)) {
-            if (!mkdir(static::LOG_DIR, 0755, true)) {
+        if (!file_exists($this->log_dir)) {
+            if (!mkdir($this->log_dir, 0755, true)) {
                 // on sort si on ne peut pas créer le repertoire de log
                 return;
             }
         }
         // définition du fichier de log
-        $log_path = static::LOG_DIR.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
+        $log_path = $this->log_dir.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
         $date = (new DateTime())->format(DATE_RFC3339_EXTENDED);
         // écritue de deux ligne de log, une avec le message et une avec les datas
         file_put_contents($log_path,"$date : $function : Message :  $message".PHP_EOL,FILE_APPEND);
@@ -219,8 +227,8 @@ class SynoFileHosting
      * Fonction pour supprimer les fichiers logs qui sont trop anciens. 
      * Est appelé à chaque fois que le constructeur de cette classe est appelé. 
      */
-    public static function cleanLog() {
-        $log_file_a = scandir(static::LOG_DIR);
+    public function cleanLog() {
+        $log_file_a = scandir($this->log_dir);
         // on defini le timestamp au dela du quel on supprime les logs. 
         // ici : tout ce qui à plus de 1 jours ( 24 x 3600 secondes )
         $timestamp_max = time() - 3600*24;
@@ -228,7 +236,7 @@ class SynoFileHosting
             if ($log_file == '.'|| $log_file == '..') {
                 continue;
             }
-            $log_file = static::LOG_DIR.DIRECTORY_SEPARATOR.$log_file;
+            $log_file = $this->log_dir.DIRECTORY_SEPARATOR.$log_file;
             $filemtime = filemtime($log_file);
             if ( $filemtime < $timestamp_max) {
                 unlink($log_file);
