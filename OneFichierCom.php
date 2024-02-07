@@ -165,7 +165,7 @@ class SynoFileHosting
     private function TypeAccount($apikey)
     {
         $this->writeLog(__FUNCTION__,'Debut de la methode : ',['parameters'=>[
-            'apikey'=>$apikey,
+            'apikey'=>str_pad(substr($apikey,0,(int)(strlen($apikey)/2)),strlen($apikey),'?',STR_PAD_RIGHT),
         ]]);
         $end_point = 'https://api.1fichier.com/v1/user/info.cgi';
         $response = $this->callApi($end_point,new stdClass());
@@ -210,8 +210,8 @@ class SynoFileHosting
         $log_path = static::LOG_DIR.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
         $date = (new DateTime())->format(DATE_RFC3339_EXTENDED);
         // écritue de deux ligne de log, une avec le message et une avec les datas
-        file_put_contents($log_path,"$date : Message :  $message".PHP_EOL,FILE_APPEND);
-        file_put_contents($log_path,"$date : Data : ".serialize($data).PHP_EOL,FILE_APPEND);
+        file_put_contents($log_path,"$date : $function : Message :  $message".PHP_EOL,FILE_APPEND);
+        file_put_contents($log_path,"$date : $function : Data : ".serialize($data).PHP_EOL,FILE_APPEND);
     }
 
     /**
