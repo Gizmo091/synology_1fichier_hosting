@@ -77,15 +77,18 @@ class SynoFileHosting
     {
         // parsing des conf que l'on peut passer dans le username
         $configs = array_map(function($param_couple) {
-            if (strpos($param_couple,'=') < 0) {
+            if (strpos($param_couple,'=') === false) {
                 return null;
             }
             return explode('=',$param_couple,2);
         },explode(';',$Username));
         $configs = array_filter($configs);
-        $configs = array_combine(array_column($configs,0),array_column($configs,1));
-        foreach($configs as $key => $value) {
-            $this->{"conf_$key"} = $value;
+        
+        if (!empty($configs)) {
+            $configs = array_combine(array_column($configs,0),array_column($configs,1));
+            foreach($configs as $key => $value) {
+                $this->{"conf_$key"} = $value;
+            }
         }
 
 
@@ -95,6 +98,7 @@ class SynoFileHosting
         $this->Url = explode('&',$Url)[0];
         $this->apikey = $apikey;
         $this->log_id = null;
+        $this->log_dir = static::LOG_DIR;
         // on défini un identifiant pour enregister les logs ( identifiant du téléchargement ou null si non récupérable )
         // exemple1 : $this->Url = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6"
         //            $this->log_id = "fzrlqa5ogmx4dzbcpga6"
@@ -260,15 +264,15 @@ class SynoFileHosting
     }
 
     private function writeLocalLog(string $row1, string $row2) {
-        if (!file_exists(static::LOG_DIR)) {
-            if (!mkdir(static::LOG_DIR, 0755, true)) {
+        if (!file_exists($this->log_dir)) {
+            if (!mkdir($this->log_dir, 0755, true)) {
                 // on sort si on ne peut pas créer le repertoire de log
                 return;
             }
         }
         $this->cleanLog();
         // définition du fichier de log
-        $log_path = static::LOG_DIR.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
+        $log_path = $this->log_dir.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
             
         // écritue de deux ligne de log, une avec le message et une avec les datas
         file_put_contents($log_path,$row1,FILE_APPEND);
