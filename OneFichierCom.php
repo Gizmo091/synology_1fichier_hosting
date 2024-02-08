@@ -2,7 +2,7 @@
 
 /*
     @author : Mathieu Vedie
-	@Version : 4.0.4
+	@Version : 4.0.5
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -36,8 +36,8 @@ class SynoFileHosting
     private $conf_cli_log = null;
     
 
-    public function callApi(string $endpoint, mixed $data) {
-        // pause entre les appels curl pour eviter le blockage
+    public function callApi(string $endpoint, $data) {
+        // pause entre les appels curl pour éviter le blockage
         sleep(2);   
         $curl = curl_init();
         curl_setopt_array($curl, array(
@@ -221,7 +221,7 @@ class SynoFileHosting
 
     
 
-    private function writeLog(string $function,string $message,mixed $data = null) {
+    private function writeLog(string $function,string $message,$data = null) {
         $date = (new DateTime())->format(DATE_RFC3339_EXTENDED);
         $row1 = "$date : $function : Message :  $message".PHP_EOL;
         $row2 = "$date : $function : Data : ".serialize($data).PHP_EOL;
@@ -295,4 +295,3 @@ class SynoFileHosting
         }
     }
 }
-?>
