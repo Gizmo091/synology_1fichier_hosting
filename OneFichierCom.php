@@ -2,7 +2,7 @@
 
 /*
     @author : Mathieu Vedie
-	@Version : 4.0.5
+	@Version : 4.0.6
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -14,6 +14,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update : 
+    - 4.0.6 : Correction d'un problème si pas de parapètre passé à la place du username et correction d'un probleme avec les logs
     - 4.0.5 : Le code est maintenant compatible php7 ( des fonctionnements de php8 avait été inclus auparavant )
     - 4.0.4 : Ajout de la possibilité d'envoyer les logs sur un serveur externe ( pour aider au debug )
     - 4.0.2 : Ajout de logs pour debuger
@@ -77,15 +78,18 @@ class SynoFileHosting
     {
         // parsing des conf que l'on peut passer dans le username
         $configs = array_map(function($param_couple) {
-            if (strpos($param_couple,'=') < 0) {
+            if (strpos($param_couple,'=') === false) {
                 return null;
             }
             return explode('=',$param_couple,2);
         },explode(';',$Username));
         $configs = array_filter($configs);
-        $configs = array_combine(array_column($configs,0),array_column($configs,1));
-        foreach($configs as $key => $value) {
-            $this->{"conf_$key"} = $value;
+        
+        if (!empty($configs)) {
+            $configs = array_combine(array_column($configs,0),array_column($configs,1));
+            foreach($configs as $key => $value) {
+                $this->{"conf_$key"} = $value;
+            }
         }
 
 
@@ -95,6 +99,7 @@ class SynoFileHosting
         $this->Url = explode('&',$Url)[0];
         $this->apikey = $apikey;
         $this->log_id = null;
+        $this->log_dir = static::LOG_DIR;
         // on défini un identifiant pour enregister les logs ( identifiant du téléchargement ou null si non récupérable )
         // exemple1 : $this->Url = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6"
         //            $this->log_id = "fzrlqa5ogmx4dzbcpga6"
@@ -260,15 +265,15 @@ class SynoFileHosting
     }
 
     private function writeLocalLog(string $row1, string $row2) {
-        if (!file_exists(static::LOG_DIR)) {
-            if (!mkdir(static::LOG_DIR, 0755, true)) {
+        if (!file_exists($this->log_dir)) {
+            if (!mkdir($this->log_dir, 0755, true)) {
                 // on sort si on ne peut pas créer le repertoire de log
                 return;
             }
         }
         $this->cleanLog();
         // définition du fichier de log
-        $log_path = static::LOG_DIR.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
+        $log_path = $this->log_dir.DIRECTORY_SEPARATOR.($this->log_id ?? 'default').'.log';
             
         // écritue de deux ligne de log, une avec le message et une avec les datas
         file_put_contents($log_path,$row1,FILE_APPEND);
