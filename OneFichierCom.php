@@ -14,6 +14,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update : 
+    - 4.0.5 : Le code est maintenant compatible php7 ( des fonctionnements de php8 avait été inclus auparavant )
     - 4.0.4 : Ajout de la possibilité d'envoyer les logs sur un serveur externe ( pour aider au debug )
     - 4.0.2 : Ajout de logs pour debuger
     - 4.0.1 : Utilisation du password pour l'apikey et non le username
