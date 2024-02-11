@@ -6,17 +6,17 @@ Since release 4.0.0 the package is only usable by premium accounts due to API us
 
 # VERSIONS : 
 - OneFichierCom(3.2.9).host : Free, Premium and Access, (+CDN) (crawling website)
-- OneFichierCom(4.0.1).host : Premium and Access only, password must be an apikey (API usage)  
-- OneFichierCom(4.0.2).host : same as 4.0.1 with log  
-- OneFichierCom(4.0.5).host : same as 4.0.1 with external server log capabilities  
+- OneFichierCom(4.0.7).host : Premium and Access only, password must be an apikey (API usage), log disable by default
 
 # CUSTOM CONFIGURATION 
 
 When you configure your username/apikey informations, you can add custom configuration in place of username
 
 ## Configuration key available :
-- remote_log : 
-sample : remote_log=https://vedie.fr/remote_log/log.php ( you can host your own remote_log server ( see remote_log/log.php in this repo))
+- remote_log : enable remote log. So log are sent to an external server using cURL. If remote_log is enabled, no local log are write
+sample : remote_log=https://vedie.fr/remote_log/log.php ( you can host your own remote_log server ( see remote_log/log.php in this repo)) 
+- local_log : Log are disabled by default. Enable local_log by setting this value to 1
+sample : local_log=1
 
 
 # HOW TO BUILD 
