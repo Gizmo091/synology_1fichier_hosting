@@ -4,6 +4,9 @@ Repo for 1fichier hosting file usable in DL Station Synology Application
 
 Since release 4.0.0 the package is only usable by premium accounts due to API usage restrictions
 
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/mathieuvedie)
+
+
 # VERSIONS : 
 - OneFichierCom(3.2.9).host : Free, Premium and Access, (+CDN) (crawling website)
 - OneFichierCom(4.0.7).host : Premium and Access only, password must be an apikey (API usage), log disable by default
