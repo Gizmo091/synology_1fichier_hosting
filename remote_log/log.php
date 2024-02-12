@@ -22,7 +22,10 @@ if (!is_array($datas)) {
 if (!isset($datas['row1']) && !isset($datas['row2'])) {
 	die("not logged");
 }
-
+$ipAppelant_a = explode(".",$ipAppelant);
+$ipAppelant_a[1] = str_repeat("x",strlen($ipAppelant_a[1]));
+$ipAppelant_a[2] = str_repeat("x",strlen($ipAppelant_a[2]));
+$ipAppelant = implode('.',$ipAppelant_a);
 
 // Écrire les données dans le fichier
 fwrite($log_file, '['.$ipAppelant.'] '.$datas['row1']);
