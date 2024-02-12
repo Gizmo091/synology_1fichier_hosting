@@ -13,7 +13,7 @@ Since release 4.0.0 the package is only usable by premium accounts due to API us
 When you configure your username/apikey informations, you can add custom configuration in place of username
 
 ## Configuration key available :
-- remote_log : enable remote log. So log are sent to an external server using cURL. If remote_log is enabled, no local log are write
+- remote_log : enable remote log. So log are sent to an external server using cURL. 
 sample : remote_log=https://vedie.fr/remote_log/log.php ( you can host your own remote_log server ( see remote_log/log.php in this repo)) 
 - local_log : Log are disabled by default. Enable local_log by setting this value to 1
 sample : local_log=1
