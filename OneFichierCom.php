@@ -1,8 +1,7 @@
 <?php
-
 /*
     @author : Mathieu Vedie
-	@Version : 4.0.6
+	@Version : 4.1.0
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -14,6 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
+    - 4.1.0 : Le endpoint Account : Show n'est plus utilisé pour valider que la clé d'API peut être utilisé , on test plutot sur un fichier dont on connait l'existance.
     - 4.0.7 : Code rendu compatible à partir de php 5.6 pour être pleinement rétrocompatible.
     - 4.0.6 : Correction d'un problème si pas de paramètre passé à la place de l'username et correction d'un problème avec les logs
     - 4.0.5 : Le code est maintenant compatible php7 (des fonctionnements de php8 avait été inclus auparavant)
@@ -25,8 +25,15 @@
     - 3.2.7 : Ajout d'un test pour verifier que le compte est premium.
  */
 
+class DownloadError extends Exception {
+
+}
+
 class SynoFileHosting {
     const LOG_DIR = '/tmp/1fichier_dot_com';
+    // fichier pour lequelle on récupere les informations afin de verifier que la clé d'api est correcte
+    // fichier heberger sur le compte 1fichier du créateur du fichier host
+    const FILE_TO_CHECK = 'https://1fichier.com/?0x7zq8jobl8snu5qcngw';
     private $Url;
     //private $Username;
     private $apikey;
@@ -128,51 +135,19 @@ class SynoFileHosting {
      * en fonction du lien passé au constructeur
      */
     public function GetDownloadInfo() {
-        $p_data    = [
-            'url' => $this->Url,
-        ];
-        $end_point = 'https://api.1fichier.com/v1/download/get_token.cgi';
-        $response  = $this->callApi( $end_point, $p_data );
-        $this->writeLog( __FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response );
-        $data = json_decode( $response, true );
-        $this->writeLog( __FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data );
-        if ( null === $data || false === $data ) {
-            $this->writeLog( __FUNCTION__, 'Data non valide !', [ 'return' => [ DOWNLOAD_ERROR => ERR_UNKNOWN ] ] );
+        try {
+            $download_url = $this->getDownloadLink( $this->Url );
+            $this->writeLog( __FUNCTION__, 'download_url : ', $download_url );
+            $filename = $this->getFileName( $this->Url );
+            $this->writeLog( __FUNCTION__, 'filename : ', $filename );
+        }
+        catch ( DownloadError $e ) {
+            $this->writeLog( __FUNCTION__, 'Catch DownloadError', [ 'return' => [ DOWNLOAD_ERROR => ERR_UNKNOWN ] ] );
             return [ DOWNLOAD_ERROR => ERR_UNKNOWN ];
         }
-        if ( 'OK' !== $data[ 'status' ] ) {
-            $this->writeLog( __FUNCTION__, 'Status non OK !', [ 'return' => [ DOWNLOAD_ERROR => ERR_UNKNOWN ] ] );
-            return [ DOWNLOAD_ERROR => ERR_UNKNOWN ];
-        }
-        if ( !array_key_exists( 'url', $data ) ) {
-            $this->writeLog( __FUNCTION__, 'Pas d\'url dans la réponse !', [ 'return' => [ DOWNLOAD_ERROR => ERR_UNKNOWN ] ] );
-            return [ DOWNLOAD_ERROR => ERR_UNKNOWN ];
-        }
-
-        $download_url = $data[ 'url' ];
-
-        $this->writeLog( __FUNCTION__, 'download_url : ', $download_url );
-
-        $p_data    = [
-            'url' => $this->Url,
-        ];
-        $end_point = 'https://api.1fichier.com/v1/file/info.cgi';
-        $response  = $this->callApi( $end_point, $p_data );
-        $this->writeLog( __FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response );
-        $data = json_decode( $response, true );
-        $this->writeLog( __FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data );
-        if ( null === $data || false === $data ) {
-            $this->writeLog( __FUNCTION__, 'Data non valide !', [ 'return' => [ DOWNLOAD_ERROR => ERR_UNKNOWN ] ] );
-            return [ DOWNLOAD_ERROR => ERR_UNKNOWN ];
-        }
-        if ( !array_key_exists( 'filename', $data ) ) {
-            $this->writeLog( __FUNCTION__, 'Pas de filename dans la réponse !', [ 'return' => [ DOWNLOAD_ERROR => ERR_UNKNOWN ] ] );
-            return [ DOWNLOAD_ERROR => ERR_UNKNOWN ];
-        }
-
 
         $return = [
-            INFO_NAME                   => $data[ 'filename' ],
+            INFO_NAME                   => $filename,
             DOWNLOAD_ISPARALLELDOWNLOAD => true,
             DOWNLOAD_URL                => $download_url
         ];
@@ -194,12 +169,30 @@ class SynoFileHosting {
         $this->writeLog( __FUNCTION__, 'Debut de la methode : ', [ 'parameters' => [
             'ClearCookie' => $ClearCookie,
         ] ] );
-        $typeaccount_return = $this->TypeAccount( $this->apikey );
+//        $typeaccount_return = $this->TypeAccount( $this->apikey );
+        $typeaccount_return = LOGIN_FAIL;
+        try {
+            $filename = $this->getFileName( 'https://1fichier.com/?0x7zq8jobl8snu5qcngw' );
+            if ( 'verify' == $filename ) {
+                $typeaccount_return = USER_IS_PREMIUM;
+            }
+
+        }
+        catch ( DownloadError $e ) {
+        }
+
         $this->writeLog( __FUNCTION__, 'Fin de la methode : ', [ 'return' => $typeaccount_return ] );
         return $typeaccount_return;
     }
 
 
+    /**
+     * @param $apikey
+     *
+     * @return int
+     * @deprecated Cette methode engendrant souvent des blocage de l'APIkey ou de l'IP car mal généré au niveau de
+     *             1fichier n'est plus utilisé
+     */
     private function TypeAccount( $apikey ) {
         $this->writeLog( __FUNCTION__, 'Debut de la methode : ', [ 'parameters' => [
             'apikey' => str_pad( substr( $apikey, 0, (int)( strlen( $apikey ) / 2 ) ), strlen( $apikey ), '?', STR_PAD_RIGHT ),
@@ -237,13 +230,68 @@ class SynoFileHosting {
 
 
     /**
+     * @return string Retourne le lien de téléchargement
+     * @throws \DownloadError
+     */
+    private function getDownloadLink( $url ) {
+        $p_data    = [
+            'url' => $url,
+        ];
+        $end_point = 'https://api.1fichier.com/v1/download/get_token.cgi';
+        $response  = $this->callApi( $end_point, $p_data );
+        $this->writeLog( __FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response );
+        $data = json_decode( $response, true );
+        $this->writeLog( __FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data );
+        if ( null === $data || false === $data ) {
+            $this->writeLog( __FUNCTION__, 'Data non valide ! throw DownloadError', [ 'param' => [ 'message' => ERR_UNKNOWN ] ] );
+            throw new DownloadError( ERR_UNKNOWN );
+        }
+
+        if ( 'OK' !== $data[ 'status' ] ) {
+            $this->writeLog( __FUNCTION__, 'Status non OK ! throw DownloadError', [ 'param' => [ 'message' => ERR_UNKNOWN ] ] );
+            throw new DownloadError( ERR_UNKNOWN );
+        }
+        if ( !array_key_exists( 'url', $data ) ) {
+            $this->writeLog( __FUNCTION__, 'Pas d\'url dans la réponse ! throw DownloadError', [ 'param' => [ 'message' => ERR_UNKNOWN ] ] );
+            throw new DownloadError( ERR_UNKNOWN );
+        }
+
+        return $data[ 'url' ];
+    }
+
+    /**
+     * @throws \DownloadError
+     */
+    private function getFileName( $url ) {
+        $p_data    = [
+            'url' => $url,
+        ];
+        $end_point = 'https://api.1fichier.com/v1/file/info.cgi';
+        $response  = $this->callApi( $end_point, $p_data );
+        $this->writeLog( __FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response );
+        $data = json_decode( $response, true );
+        $this->writeLog( __FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data );
+        if ( null === $data || false === $data ) {
+            $this->writeLog( __FUNCTION__, 'Data non valide ! throw DownloadError', [ 'param' => [ 'message' => ERR_UNKNOWN ] ] );
+            throw new DownloadError( ERR_UNKNOWN );
+        }
+        if ( !array_key_exists( 'filename', $data ) ) {
+            $this->writeLog( __FUNCTION__, 'Pas de filename dans la réponse ! throw DownloadError', [ 'param' => [ 'message' => ERR_UNKNOWN ] ] );
+            throw new DownloadError( ERR_UNKNOWN );
+        }
+        return $data[ 'filename' ];
+    }
+
+
+    /**
      * @param string $function
      * @param string $message
      * @param mixed  $data
      *
      * @return void
      */
-    private function writeLog( $function, $message, $data = null ) {
+    private
+    function writeLog( $function, $message, $data = null ) {
         $date = ( new DateTime() )->format( DATE_RFC3339_EXTENDED );
         $row1 = "$date : $function : Message :  $message" . PHP_EOL;
         $row2 = "$date : $function : Data : " . serialize( $data ) . PHP_EOL;
@@ -252,7 +300,8 @@ class SynoFileHosting {
         $this->writeLocalLog( $row1, $row2 );
     }
 
-    private function writeCLILog( $row1, $row2 ) {
+    private
+    function writeCLILog( $row1, $row2 ) {
         if ( "1" == $this->conf_cli_log ) {
             fwrite( STDERR, $row1 );
             fwrite( STDERR, $row2 );
@@ -265,7 +314,8 @@ class SynoFileHosting {
      *
      * @return void
      */
-    private function writeRemoteLog( $row1, $row2 ) {
+    private
+    function writeRemoteLog( $row1, $row2 ) {
         if ( $this->conf_remote_log === null ) {
             return;
         }
@@ -296,7 +346,8 @@ class SynoFileHosting {
      *
      * @return void
      */
-    private function writeLocalLog( $row1, $row2 ) {
+    private
+    function writeLocalLog( $row1, $row2 ) {
         // si local log désactivé, on sort de la fonction
         if ( $this->conf_local_log != "1" ) {
             return;
@@ -325,7 +376,8 @@ class SynoFileHosting {
      * Fonction pour supprimer les fichiers logs qui sont trop anciens.
      * Est appelé à chaque fois que le constructeur de cette classe est appelé.
      */
-    public function cleanLog() {
+    public
+    function cleanLog() {
         $log_file_a = scandir( $this->log_dir );
         // On définit le timestamp au dela duquel on supprime les logs.
         // Ici : tout ce qui a plus de 1 jour (24 x 3600 secondes)
