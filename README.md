@@ -9,7 +9,7 @@ Since release 4.0.0 the package is only usable by premium accounts due to API us
 
 # VERSIONS : 
 - OneFichierCom(3.2.9).host : Free, Premium and Access, (+CDN) (crawling website)
-- OneFichierCom(4.0.7).host : Premium and Access only, password must be an apikey (API usage), log disable by default
+- OneFichierCom(4.1.0).host : Premium and Access only, password must be an apikey (API usage), log disable by default
 
 # CUSTOM CONFIGURATION 
 
