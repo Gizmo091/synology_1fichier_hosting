@@ -1,7 +1,7 @@
 <?php
 /*
     @author : Mathieu Vedie
-	@Version : 4.1.0
+	@Version : 4.2.0
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -13,6 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
+    - 4.2.0 : Prise en compte des liens avec un token de téléchargement : exemple : https://a-6.1fichier.com/p1058755667
     - 4.1.0 : Le endpoint Account : Show n'est plus utilisé pour valider que la clé d'API peut être utilisé , on test plutot sur un fichier dont on connait l'existance.
     - 4.0.7 : Code rendu compatible à partir de php 5.6 pour être pleinement rétrocompatible.
     - 4.0.6 : Correction d'un problème si pas de paramètre passé à la place de l'username et correction d'un problème avec les logs
@@ -136,10 +137,21 @@ class SynoFileHosting {
      */
     public function GetDownloadInfo() {
         try {
-            $download_url = $this->getDownloadLink( $this->Url );
-            $this->writeLog( __FUNCTION__, 'download_url : ', $download_url );
-            $filename = $this->getFileName( $this->Url );
-            $this->writeLog( __FUNCTION__, 'filename : ', $filename );
+            // Si c'est un lien déjà obtenu avec un token de téléchargement.
+            if (preg_match("/^https:\/\/[a-zA-Z0-9]+(-[0-9]+)?\.1fichier\.com\/[a-zA-Z0-9]+$/",$this->Url)) {
+                $filename = $this->getFilenameFromUrl($this->Url);
+                if (null === $filename) {
+                    $this->writeLog( __FUNCTION__, 'No filename returned', [ 'return' => [ DOWNLOAD_ERROR => ERR_UNKNOWN ] ] );
+                    return [ DOWNLOAD_ERROR => ERR_UNKNOWN ];        
+                }
+                $download_url = $this->Url;
+            }
+            else {
+                $download_url = $this->getDownloadLink( $this->Url );
+                $this->writeLog( __FUNCTION__, 'download_url : ', $download_url );
+                $filename = $this->getFileName( $this->Url );
+                $this->writeLog( __FUNCTION__, 'filename : ', $filename );
+            } 
         }
         catch ( DownloadError $e ) {
             $this->writeLog( __FUNCTION__, 'Catch DownloadError', [ 'return' => [ DOWNLOAD_ERROR => ERR_UNKNOWN ] ] );
@@ -155,6 +167,43 @@ class SynoFileHosting {
         return $return;
 
 
+    }
+
+    protected function getFilenameFromUrl($url) {
+        $this->writeLog( __FUNCTION__, 'Debut de la methode : ', [ 'parameters' => [
+            'url' => $url,
+        ] ] );
+        
+        // Initialiser cURL
+        $ch = curl_init();
+        
+        // Configurer les options de cURL pour envoyer une requête HEAD
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_NOBODY, true); // Ne récupère que les en-têtes
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, true); // Inclure les en-têtes dans la sortie
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Suivre les redirections
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'HEAD');
+        
+        // Exécuter la requête cURL
+        $response = curl_exec($ch);
+        if (curl_errno($ch)) {
+            $this->writeLog( __FUNCTION__, 'Curl Error', [ 'error' => curl_error($ch),'return' => null ] );
+            curl_close($ch);
+            return null;
+        }
+        
+        // Fermer la session cURL
+        curl_close($ch);
+        
+        // Utiliser une expression régulière pour extraire le nom du fichier
+        if (preg_match('/filename="(.*?)"/', $response, $matches)) {
+            $this->writeLog( __FUNCTION__, 'Filename found', [ 'return' => $matches[1] ] );
+            return $matches[1];
+        } 
+        $this->writeLog( __FUNCTION__, 'No filename', [ 'return' => null ] );
+        return null;
+        
     }
 
     /**
