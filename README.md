@@ -7,10 +7,16 @@ Since release 4.0.0 the package is only usable by premium accounts due to API us
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/mathieuvedie)
 
 
+# BUG KNOWN : 
+
+- [Fixed since 4.1.0] Credential validation return error sometimes, ignore this error if you are sure of your key. The 1fichier API can sometimes return over quota response. 
+
+- Conflict with alldebrid host (certainly the 4.3.0 version, maybe other) : The alldebrid host seems to take priority over 1fichier host and cause error durring download. 
+
 # VERSIONS : 
 - OneFichierCom(3.2.9).host : Free, Premium and Access, (+CDN) (crawling website)
 - OneFichierCom(4.1.0).host : Premium and Access only, password must be an apikey (API usage), log disable by default
-- OneFichierCom(4.2.0).host : Prise en compte des liens avec un token de téléchargement : exemple : https://a-6.1fichier.com/p1058755667
+- OneFichierCom(4.2.0).host : Add support for already tokenized link (link sample : https://a-6.1fichier.com/p1058755667)
 
 # CUSTOM CONFIGURATION 
 
