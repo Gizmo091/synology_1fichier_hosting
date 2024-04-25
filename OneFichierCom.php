@@ -160,6 +160,7 @@ class SynoFileHosting {
 
         $return = [
             INFO_NAME                   => $filename,
+            DOWNLOAD_FILENAME           => $filename,
             DOWNLOAD_ISPARALLELDOWNLOAD => true,
             DOWNLOAD_URL                => $download_url
         ];
