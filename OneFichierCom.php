@@ -13,7 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
-    - 4.3.0 : Définition du nom du fichier de destination dans les informations retourner au DL Station ( evite par exemple les _ indésirables )
+    - 4.3.0 : Définition du nom du fichier de destination dans les informations retournées au DL Station ( evite par exemple les _ indésirables )
     - 4.2.0 : Prise en compte des liens avec un token de téléchargement : exemple : https://a-6.1fichier.com/p1058755667
     - 4.1.0 : Le endpoint Account : Show n'est plus utilisé pour valider que la clé d'API peut être utilisé , on test plutot sur un fichier dont on connait l'existance.
     - 4.0.7 : Code rendu compatible à partir de php 5.6 pour être pleinement rétrocompatible.
@@ -445,3 +445,6 @@ class SynoFileHosting {
         }
     }
 }
+
+
+
