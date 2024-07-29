@@ -1,7 +1,7 @@
 <?php
 /*
     @author : Mathieu Vedie
-	@Version : 4.3.0
+	@Version : 4.4.0
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -13,6 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
+    - 4.4.0 : Désactivation du controle du certifficat SSL.
     - 4.3.0 : Définition du nom du fichier de destination dans les informations retournées au DL Station ( evite par exemple les _ indésirables )
     - 4.2.0 : Prise en compte des liens avec un token de téléchargement : exemple : https://a-6.1fichier.com/p1058755667
     - 4.1.0 : Le endpoint Account : Show n'est plus utilisé pour valider que la clé d'API peut être utilisé , on test plutot sur un fichier dont on connait l'existance.
