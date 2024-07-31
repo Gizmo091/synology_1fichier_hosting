@@ -159,7 +159,7 @@ class SynoFileHosting
             } else {
                 $download_url = $this->getDownloadLink($this->Url);
                 $this->writeLog(__FUNCTION__, 'download_url : ', $download_url);
-                $filename = $this->getFileName($this->Url);
+                $filename = $this->getFileName($this->Url, $download_url);
                 $this->writeLog(__FUNCTION__, 'filename : ', $filename);
             }
         } catch (DownloadError $e) {
@@ -320,10 +320,10 @@ class SynoFileHosting
     /**
      * @throws \DownloadError
      */
-    private function getFileName($url)
+    private function getFileName($url_original, $url_download = null)
     {
         $p_data    = [
-            'url' => $url,
+            'url' => $url_original,
         ];
         $end_point = 'https://api.1fichier.com/v1/file/info.cgi';
         $response  = $this->callApi($end_point, $p_data);
@@ -332,10 +332,18 @@ class SynoFileHosting
         $this->writeLog(__FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data);
         if (null === $data || false === $data) {
             $this->writeLog(__FUNCTION__, 'Data non valide ! throw DownloadError', ['param' => ['message' => ERR_UNKNOWN]]);
+            // on fallback sur l'autre methode
+            if ($url_download) {
+                return $this->getFilenameFromUrl($url_download);
+            }
             throw new DownloadError(ERR_UNKNOWN);
         }
         if (!array_key_exists('filename', $data)) {
             $this->writeLog(__FUNCTION__, 'Pas de filename dans la réponse ! throw DownloadError', ['param' => ['message' => ERR_UNKNOWN]]);
+            // on fallback sur l'autre methode
+            if ($url_download) {
+                return $this->getFilenameFromUrl($url_download);
+            }
             throw new DownloadError(ERR_UNKNOWN);
         }
         return $data['filename'];
