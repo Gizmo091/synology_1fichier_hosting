@@ -19,6 +19,7 @@ Since release 4.0.0 the package is only usable by premium accounts due to API us
 - OneFichierCom(4.2.0).host : Add support for already tokenized link (link sample : https://a-6.1fichier.com/p1058755667)
 - OneFichierCom(4.3.0).host : Real file name is now the destination file name ( without added _ )
 - OneFichierCom(4.4.0).host : Disable ssl certificate verification.
+- OneFichierCom(4.5.0).host : Fallback on curl HEAD requests to get filename when api refused to return file name (owner locked ...)
 
 # CUSTOM CONFIGURATION 
 
