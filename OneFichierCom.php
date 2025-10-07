@@ -1,7 +1,7 @@
 <?php
 /*
     @author : Mathieu Vedie
-	@Version : 4.5.0
+	@Version : 4.6.0
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -13,7 +13,8 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
-    - 4.5.0 : Fallback on curl HEAD requests to get filename when api refused to return file name (owner locked ...)
+    - 4.6.0 : L’URL du fichier "verify" sur 1fichier, utilisée pour vérifier le bon fonctionnement de la connexion, est récupérée depuis le dépôt GitHub. Comme je n’ai plus de compte premium, cette URL est susceptible de changer régulièrement.
+    - 4.5.0 : Recours aux requêtes curl HEAD pour obtenir le nom du fichier lorsque l'API refuse de renvoyer le nom du fichier (propriétaire verrouillé...)
     - 4.4.0 : Désactivation du controle du certifficat SSL.
     - 4.3.0 : Définition du nom du fichier de destination dans les informations retournées au DL Station ( evite par exemple les _ indésirables )
     - 4.2.0 : Prise en compte des liens avec un token de téléchargement : exemple : https://a-6.1fichier.com/p1058755667
@@ -38,7 +39,6 @@ class SynoFileHosting
     const LOG_DIR = '/tmp/1fichier_dot_com';
     // fichier pour lequelle on récupere les informations afin de verifier que la clé d'api est correcte
     // fichier heberger sur le compte 1fichier du créateur du fichier host
-    const FILE_TO_CHECK = 'https://1fichier.com/?0x7zq8jobl8snu5qcngw';
     private $Url;
     //private $Username;
     private $apikey;
@@ -228,10 +228,28 @@ class SynoFileHosting
         $this->writeLog(__FUNCTION__, 'Debut de la methode : ', ['parameters' => [
             'ClearCookie' => $ClearCookie,
         ]]);
+
+        $get_verify_url = function() {
+            $this->writeLog('get_verify_url', 'Debut de la methode : ', ['parameters' => []]);
+            $opts = [
+                'http' => [
+                    'method' => "GET",
+                    'header' => "Accept-language: en\r\n" .
+                        "Cookie: foo=bar",
+                ]
+            ];
+
+            $context = stream_context_create($opts);
+
+            // Open the file using the HTTP headers set above
+            $file_url = file_get_contents('https://raw.githubusercontent.com/Gizmo091/synology_1fichier_hosting/refs/heads/main/verify.html', false, $context);
+            $this->writeLog('get_verify_url', 'Fin de la methode : ', ['return' => $file_url]);
+            return $file_url;
+        };
         //        $typeaccount_return = $this->TypeAccount( $this->apikey );
         $typeaccount_return = LOGIN_FAIL;
         try {
-            $filename = $this->getFileName('https://1fichier.com/?0x7zq8jobl8snu5qcngw');
+            $filename = $this->getFileName($get_verify_url());
             if ('verify' == $filename) {
                 $typeaccount_return = USER_IS_PREMIUM;
             }

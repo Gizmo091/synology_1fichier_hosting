@@ -20,7 +20,7 @@ Since release 4.0.0 the package is only usable by premium accounts due to API us
 - OneFichierCom(4.3.0).host : Real file name is now the destination file name ( without added _ )
 - OneFichierCom(4.4.0).host : Disable ssl certificate verification.
 - OneFichierCom(4.5.0).host : Fallback on curl HEAD requests to get filename when api refused to return file name (owner locked ...)
-- OneFichierCom(4.6.0).host : Url of verify file (hosted on 1fichier) is retrieve from github repo (verify.html)
+- OneFichierCom(4.6.0).host : The URL for the "verify" file on 1fichier, used to verify that the connection is working properly, is retrieved from the GitHub repository. Since I no longer have a premium account, this URL is likely to change regularly.
 
 # CUSTOM CONFIGURATION 
 
