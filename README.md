@@ -13,13 +13,14 @@ Since release 4.0.0 the package is only usable by premium accounts due to API us
 
 - Conflict with alldebrid host (certainly the 4.3.0 version, maybe other) : The alldebrid host seems to take priority over 1fichier host and cause error durring download. 
 
-# VERSIONS : 
+# VERSIONS :
 - OneFichierCom(3.2.9).host : Free, Premium and Access, (+CDN) (crawling website)
 - OneFichierCom(4.1.0).host : Premium and Access only, password must be an apikey (API usage), log disable by default
 - OneFichierCom(4.2.0).host : Add support for already tokenized link (link sample : https://a-6.1fichier.com/p1058755667)
 - OneFichierCom(4.3.0).host : Real file name is now the destination file name ( without added _ )
 - OneFichierCom(4.4.0).host : Disable ssl certificate verification.
 - OneFichierCom(4.5.0).host : Fallback on curl HEAD requests to get filename when api refused to return file name (owner locked ...)
+- OneFichierCom(4.6.0).host : Url of verify file (hosted on 1fichier) is retrieve from github repo (verify.html)
 
 # CUSTOM CONFIGURATION 
 
