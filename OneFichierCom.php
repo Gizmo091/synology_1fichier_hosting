@@ -1,7 +1,7 @@
 <?php
 /*
     @author : Mathieu Vedie
-	@Version : 4.7.2
+	@Version : 4.7.3
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -13,6 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
+    - 4.7.3 : Correction d'une erreur de recuperation des noms de fichiers sur les url direct en http
     - 4.7.0 : Renommage de la classe et amélioration des numéros d'erreur.
     - 4.6.0 : L’URL du fichier "verify" sur 1fichier, utilisée pour vérifier le bon fonctionnement de la connexion, est récupérée depuis le dépôt GitHub. Comme je n’ai plus de compte premium, cette URL est susceptible de changer régulièrement.
     - 4.5.0 : Recours aux requêtes curl HEAD pour obtenir le nom du fichier lorsque l'API refuse de renvoyer le nom du fichier (propriétaire verrouillé...)
@@ -33,7 +34,7 @@
 
 class DownloadError extends Exception
 {
-    public function __construct($code = ERR_UNKNOWN, Throwable $previous = null) {
+    public function __construct($code = ERR_UNKNOWN, $previous = null) {
         parent::__construct( '', $code, $previous );
     }
 }
@@ -154,7 +155,7 @@ class OneFichierFileHosting
     {
         try {
             // Si c'est un lien déjà obtenu avec un token de téléchargement.
-            if (preg_match("/^https:\/\/[a-zA-Z0-9]+(-[0-9]+)?\.1fichier\.com\/[a-zA-Z0-9]+$/", $this->Url)) {
+            if (preg_match("/^https?:\/\/[a-zA-Z0-9]+(-[0-9]+)?\.1fichier\.com\/[a-zA-Z0-9]+$/", $this->Url)) {
                 $download_url = $this->Url;
             } else {
                 $download_url = $this->getDownloadLink($this->Url);
@@ -201,6 +202,7 @@ class OneFichierFileHosting
 
         // Exécuter la requête cURL
         $response = curl_exec($ch);
+
         if (curl_errno($ch)) {
             $this->writeLog(__FUNCTION__, 'Curl Error', ['error' => curl_error($ch), 'return' => null]);
             curl_close($ch);
