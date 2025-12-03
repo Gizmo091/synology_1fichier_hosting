@@ -32,15 +32,13 @@
     - 3.2.7 : Ajout d'un test pour verifier que le compte est premium.
  */
 
-class DownloadError extends Exception
-{
+class DownloadError extends Exception {
     public function __construct($code = ERR_UNKNOWN, $previous = null) {
         parent::__construct( '', $code, $previous );
     }
 }
 
-class OneFichierFileHosting
-{
+class OneFichierFileHosting {
     const LOG_DIR = '/tmp/1fichier_dot_com';
     // fichier pour lequelle on récupere les informations afin de verifier que la clé d'api est correcte
     // fichier heberger sur le compte 1fichier du créateur du fichier host
@@ -62,13 +60,12 @@ class OneFichierFileHosting
      *
      * @return bool|mixed|string
      */
-    public function callApi($endpoint, $data)
-    {
+    public function callApi($endpoint, $data) {
         // pause entre les appels curl pour éviter le blockage
-        sleep(2);
+        sleep( 2 );
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
+        curl_setopt_array( $curl, array(
             CURLOPT_URL            => $endpoint,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING       => '',
@@ -77,25 +74,27 @@ class OneFichierFileHosting
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST  => 'POST',
-            CURLOPT_POSTFIELDS     => json_encode($data),
+            CURLOPT_POSTFIELDS     => json_encode( $data ),
             CURLOPT_HTTPHEADER     => array(
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apikey
             ),
-            CURLOPT_SSL_VERIFYPEER => false, // Ignorer la vérification du certificat
-            CURLOPT_SSL_VERIFYHOST => false, // Ne pas vérifier le nom de l'hôte
-        ));
-        $response = curl_exec($curl);
+            CURLOPT_SSL_VERIFYPEER => false,
+            // Ignorer la vérification du certificat
+            CURLOPT_SSL_VERIFYHOST => false,
+            // Ne pas vérifier le nom de l'hôte
+        ) );
+        $response = curl_exec( $curl );
         if (false === $response) {
-            $this->writeLog(__FUNCTION__, 'Erreur de curl', [
+            $this->writeLog( __FUNCTION__, 'Erreur de curl', [
                 'parameters' => [
                     'endpoint' => $endpoint,
                     'data'     => $data,
                 ],
-                'curl_error' => curl_error($curl)
-            ]);
+                'curl_error' => curl_error( $curl )
+            ] );
         }
-        curl_close($curl);
+        curl_close( $curl );
         return $response;
     }
 
@@ -104,19 +103,18 @@ class OneFichierFileHosting
      * Le mot de passe est utilisé pour stocker l'apikey, c'est pour cela que le 3ème arguments
      * est nommé apikey et non password
      */
-    public function __construct($Url, $Username, $apikey, $HostInfo)
-    {
+    public function __construct($Url, $Username, $apikey, $HostInfo) {
         // parsing des conf que l'on peut passer dans l'username
-        $configs = array_map(function ($param_couple) {
-            if (strpos($param_couple, '=') === false) {
+        $configs = array_map( function ($param_couple) {
+            if (strpos( $param_couple, '=' ) === false) {
                 return null;
             }
-            return explode('=', $param_couple, 2);
-        }, explode(';', $Username));
-        $configs = array_filter($configs);
+            return explode( '=', $param_couple, 2 );
+        }, explode( ';', $Username ) );
+        $configs = array_filter( $configs );
 
-        if (!empty($configs)) {
-            $configs = array_combine(array_column($configs, 0), array_column($configs, 1));
+        if (!empty( $configs )) {
+            $configs = array_combine( array_column( $configs, 0 ), array_column( $configs, 1 ) );
             foreach ($configs as $key => $value) {
                 $this->{"conf_$key"} = $value;
             }
@@ -126,7 +124,7 @@ class OneFichierFileHosting
         // Retire tout ce qui vient en plus du lien de téléchargement strict.
         // exemple : $Url       = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6&af=3601079"
         //           $this->Url = "https://1fichier.com/?fzrlqa5ogmx4dzbcpga6"
-        $this->Url     = explode('&', $Url)[0];
+        $this->Url     = explode( '&', $Url )[ 0 ];
         $this->apikey  = $apikey;
         $this->log_id  = null;
         $this->log_dir = static::LOG_DIR;
@@ -135,42 +133,43 @@ class OneFichierFileHosting
         //            $this->log_id = "fzrlqa5ogmx4dzbcpga6"
         // exemple2 : $this->Url = "https://1fichier.com/fzrlqa5ogmx4dzbcpga6"
         //            $this->log_id = "null"
-        $log_id = explode('?', $this->Url, 2);
-        if (isset($log_id[1])) {
-            $this->log_id = $log_id[1];
+        $log_id = explode( '?', $this->Url, 2 );
+        if (isset( $log_id[ 1 ] )) {
+            $this->log_id = $log_id[ 1 ];
         }
-        $this->writeLog(__FUNCTION__, 'Appel du constructeur de ' . __CLASS__, ['parameters' => [
+        $this->writeLog( __FUNCTION__, 'Appel du constructeur de ' . __CLASS__, [ 'parameters' => [
             'Url'      => $Url,
             'Username' => $Username,
-            'apikey'   => str_pad(substr($apikey, 0, (int)(strlen($apikey) / 2)), strlen($apikey), '?', STR_PAD_RIGHT),
+            'apikey'   => str_pad( substr( $apikey, 0, (int)( strlen( $apikey ) / 2 ) ), strlen( $apikey ), '?', STR_PAD_RIGHT ),
             'HostInfo' => $HostInfo
-        ]]);
+        ] ] );
     }
 
     /**
      * Fonction qui est appelée pour récupérer les informations d'un fichier
      * en fonction du lien passé au constructeur
      */
-    public function GetDownloadInfo()
-    {
+    public function GetDownloadInfo() {
         try {
             // Si c'est un lien déjà obtenu avec un token de téléchargement.
-            if (preg_match("/^https?:\/\/[a-zA-Z0-9]+(-[0-9]+)?\.1fichier\.com\/[a-zA-Z0-9]+$/", $this->Url)) {
+            if (preg_match( "/^https?:\/\/[a-zA-Z0-9]+(-[0-9]+)?\.1fichier\.com\/[a-zA-Z0-9]+$/", $this->Url )) {
                 $download_url = $this->Url;
-            } else {
-                $download_url = $this->getDownloadLink($this->Url);
-                $this->writeLog(__FUNCTION__, 'download_url : ', $download_url);
             }
-            $filename = $this->getFilenameFromUrl($download_url);
+            else {
+                $download_url = $this->getDownloadLink( $this->Url );
+                $this->writeLog( __FUNCTION__, 'download_url : ', $download_url );
+            }
+            $filename = $this->getFilenameFromUrl( $download_url );
             if (null === $filename) {
-                $this->writeLog(__FUNCTION__, 'No filename returned', ['return' => [DOWNLOAD_ERROR => ERR_FILE_NO_EXIST]]);
-                return [DOWNLOAD_ERROR => ERR_FILE_NO_EXIST];
+                $this->writeLog( __FUNCTION__, 'No filename returned', [ 'return' => [ DOWNLOAD_ERROR => ERR_FILE_NO_EXIST ] ] );
+                return [ DOWNLOAD_ERROR => ERR_FILE_NO_EXIST ];
             }
-            $this->writeLog(__FUNCTION__, 'filename : ', $filename);
+            $this->writeLog( __FUNCTION__, 'filename : ', $filename );
 
-        } catch (DownloadError $e) {
-            $this->writeLog(__FUNCTION__, 'Catch DownloadError', ['return' => [DOWNLOAD_ERROR => $e->getCode()]]);
-            return [DOWNLOAD_ERROR => $e->getCode()];
+        }
+        catch (DownloadError $e) {
+            $this->writeLog( __FUNCTION__, 'Catch DownloadError', [ 'return' => [ DOWNLOAD_ERROR => $e->getCode() ] ] );
+            return [ DOWNLOAD_ERROR => $e->getCode() ];
         }
 
         $return = [
@@ -179,45 +178,46 @@ class OneFichierFileHosting
             DOWNLOAD_ISPARALLELDOWNLOAD => true,
             DOWNLOAD_URL                => $download_url
         ];
-        $this->writeLog(__FUNCTION__, 'Fin de la methode sans erreur : ', ['return' => $return]);
+        $this->writeLog( __FUNCTION__, 'Fin de la methode sans erreur : ', [ 'return' => $return ] );
         return $return;
     }
 
-    protected function getFilenameFromUrl($url)
-    {
-        $this->writeLog(__FUNCTION__, 'Debut de la methode : ', ['parameters' => [
+    protected function getFilenameFromUrl($url) {
+        $this->writeLog( __FUNCTION__, 'Debut de la methode : ', [ 'parameters' => [
             'url' => $url,
-        ]]);
+        ] ] );
 
         // Initialiser cURL
         $ch = curl_init();
 
         // Configurer les options de cURL pour envoyer une requête HEAD
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_NOBODY, true); // Ne récupère que les en-têtes
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, true); // Inclure les en-têtes dans la sortie
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Suivre les redirections
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'HEAD');
+        curl_setopt( $ch, CURLOPT_URL, $url );
+        curl_setopt( $ch, CURLOPT_NOBODY, true ); // Ne récupère que les en-têtes
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $ch, CURLOPT_HEADER, true );         // Inclure les en-têtes dans la sortie
+        curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true ); // Suivre les redirections
+        curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'HEAD' );
 
         // Exécuter la requête cURL
-        $response = curl_exec($ch);
+        $response = curl_exec( $ch );
 
-        if (curl_errno($ch)) {
-            $this->writeLog(__FUNCTION__, 'Curl Error', ['error' => curl_error($ch), 'return' => null]);
-            curl_close($ch);
+        if (curl_errno( $ch )) {
+            $this->writeLog( __FUNCTION__, 'Curl Error', [ 'error'  => curl_error( $ch ),
+                                                           'return' => null ] );
+            curl_close( $ch );
             return null;
         }
 
         // Fermer la session cURL
-        curl_close($ch);
+        curl_close( $ch );
 
         // Utiliser une expression régulière pour extraire le nom du fichier
-        if (preg_match('/filename="(.*?)"/', $response, $matches)) {
-            $this->writeLog(__FUNCTION__, 'Filename found', ['return' => $matches[1]]);
-            return $matches[1];
+        if (preg_match( '/filename="(.*?)"/', $response, $matches )) {
+            $this->writeLog( __FUNCTION__, 'Filename found', [ 'return' => $matches[ 1 ] ] );
+            return $matches[ 1 ];
         }
-        $this->writeLog(__FUNCTION__, 'No filename', ['return' => null]);
+        $this->writeLog( __FUNCTION__, 'No filename', [ 'return'   => null,
+                                                        'response' => $response ] );
         return null;
     }
 
@@ -229,14 +229,13 @@ class OneFichierFileHosting
      * @return int
      * @noinspection PhpUnused
      */
-    public function Verify($ClearCookie)
-    {
-        $this->writeLog(__FUNCTION__, 'Debut de la methode : ', ['parameters' => [
+    public function Verify($ClearCookie) {
+        $this->writeLog( __FUNCTION__, 'Debut de la methode : ', [ 'parameters' => [
             'ClearCookie' => $ClearCookie,
-        ]]);
+        ] ] );
 
-        $get_verify_url = function() {
-            $this->writeLog('get_verify_url', 'Debut de la methode : ', ['parameters' => []]);
+        $get_verify_url = function () {
+            $this->writeLog( 'get_verify_url', 'Debut de la methode : ', [ 'parameters' => [] ] );
             $opts = [
                 'http' => [
                     'method' => "GET",
@@ -245,24 +244,25 @@ class OneFichierFileHosting
                 ]
             ];
 
-            $context = stream_context_create($opts);
+            $context = stream_context_create( $opts );
 
             // Open the file using the HTTP headers set above
-            $file_url = file_get_contents('https://raw.githubusercontent.com/Gizmo091/synology_1fichier_hosting/refs/heads/main/verify.html', false, $context);
-            $this->writeLog('get_verify_url', 'Fin de la methode : ', ['return' => $file_url]);
+            $file_url = file_get_contents( 'https://raw.githubusercontent.com/Gizmo091/synology_1fichier_hosting/refs/heads/main/verify.html', false, $context );
+            $this->writeLog( 'get_verify_url', 'Fin de la methode : ', [ 'return' => $file_url ] );
             return $file_url;
         };
         //        $typeaccount_return = $this->TypeAccount( $this->apikey );
         $typeaccount_return = LOGIN_FAIL;
         try {
-            $filename = $this->getFileName($get_verify_url());
+            $filename = $this->getFileName( $get_verify_url() );
             if ('verify' == $filename) {
                 $typeaccount_return = USER_IS_PREMIUM;
             }
-        } catch (DownloadError $e) {
+        }
+        catch (DownloadError $e) {
         }
 
-        $this->writeLog(__FUNCTION__, 'Fin de la methode : ', ['return' => $typeaccount_return]);
+        $this->writeLog( __FUNCTION__, 'Fin de la methode : ', [ 'return' => $typeaccount_return ] );
         return $typeaccount_return;
     }
 
@@ -274,30 +274,29 @@ class OneFichierFileHosting
      * @deprecated Cette methode engendrant souvent des blocage de l'APIkey ou de l'IP car mal généré au niveau de
      *             1fichier n'est plus utilisé
      */
-    private function TypeAccount($apikey)
-    {
-        $this->writeLog(__FUNCTION__, 'Debut de la methode : ', ['parameters' => [
-            'apikey' => str_pad(substr($apikey, 0, (int)(strlen($apikey) / 2)), strlen($apikey), '?', STR_PAD_RIGHT),
-        ]]);
+    private function TypeAccount($apikey) {
+        $this->writeLog( __FUNCTION__, 'Debut de la methode : ', [ 'parameters' => [
+            'apikey' => str_pad( substr( $apikey, 0, (int)( strlen( $apikey ) / 2 ) ), strlen( $apikey ), '?', STR_PAD_RIGHT ),
+        ] ] );
         $end_point = 'https://api.1fichier.com/v1/user/info.cgi';
-        $response  = $this->callApi($end_point, new stdClass());
-        $this->writeLog(__FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response);
-        $data = json_decode($response, true);
-        $this->writeLog(__FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data);
+        $response  = $this->callApi( $end_point, new stdClass() );
+        $this->writeLog( __FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response );
+        $data = json_decode( $response, true );
+        $this->writeLog( __FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data );
         if (null === $data || false === $data) {
-            $this->writeLog(__FUNCTION__, 'Data non valide !', ['return' => LOGIN_FAIL]);
+            $this->writeLog( __FUNCTION__, 'Data non valide !', [ 'return' => LOGIN_FAIL ] );
             return LOGIN_FAIL;
         }
-        if ('OK' !== $data['status']) {
-            $this->writeLog(__FUNCTION__, 'Status non OK !', ['return' => LOGIN_FAIL]);
+        if ('OK' !== $data[ 'status' ]) {
+            $this->writeLog( __FUNCTION__, 'Status non OK !', [ 'return' => LOGIN_FAIL ] );
             return LOGIN_FAIL;
         }
-        if (!array_key_exists('offer', $data)) {
-            $this->writeLog(__FUNCTION__, 'Pas d\'offer dans la réponse !', ['return' => LOGIN_FAIL]);
+        if (!array_key_exists( 'offer', $data )) {
+            $this->writeLog( __FUNCTION__, 'Pas d\'offer dans la réponse !', [ 'return' => LOGIN_FAIL ] );
             return LOGIN_FAIL;
         }
         $return = LOGIN_FAIL;
-        switch ((int)$data['offer']) {
+        switch ((int)$data[ 'offer' ]) {
             case 0;
                 $return = USER_IS_FREE;
                 break;
@@ -306,7 +305,7 @@ class OneFichierFileHosting
                 $return = USER_IS_PREMIUM;
                 break;
         }
-        $this->writeLog(__FUNCTION__, 'Fin de la methode sans erreur : ', ['return' => $return]);
+        $this->writeLog( __FUNCTION__, 'Fin de la methode sans erreur : ', [ 'return' => $return ] );
         return $return;
     }
 
@@ -315,68 +314,66 @@ class OneFichierFileHosting
      * @return string Retourne le lien de téléchargement
      * @throws \DownloadError
      */
-    private function getDownloadLink($url)
-    {
+    private function getDownloadLink($url) {
         $p_data    = [
             'url' => $url,
         ];
         $end_point = 'https://api.1fichier.com/v1/download/get_token.cgi';
-        $response  = $this->callApi($end_point, $p_data);
-        $this->writeLog(__FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response);
-        $data = json_decode($response, true);
-        $this->writeLog(__FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data);
+        $response  = $this->callApi( $end_point, $p_data );
+        $this->writeLog( __FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response );
+        $data = json_decode( $response, true );
+        $this->writeLog( __FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data );
         if (null === $data || false === $data) {
-            $this->writeLog(__FUNCTION__, 'Data non valide ! throw DownloadError', ['param' => ['message' => ERR_BROKEN_LINK]]);
-            throw new DownloadError(ERR_BROKEN_LINK);
+            $this->writeLog( __FUNCTION__, 'Data non valide ! throw DownloadError', [ 'param' => [ 'message' => ERR_BROKEN_LINK ] ] );
+            throw new DownloadError( ERR_BROKEN_LINK );
         }
 
-        if ('OK' !== $data['status']) {
+        if ('OK' !== $data[ 'status' ]) {
 
-            if ($data['message'] === 'Must be a customer (Premium, Access) #236') {
-                $this->writeLog(__FUNCTION__, 'Status non OK ! throw DownloadError', ['param' => ['message' => ERR_REQUIRED_PREMIUM]]);
-                throw new DownloadError(ERR_REQUIRED_PREMIUM);
+            if ($data[ 'message' ] === 'Must be a customer (Premium, Access) #236') {
+                $this->writeLog( __FUNCTION__, 'Status non OK ! throw DownloadError', [ 'param' => [ 'message' => ERR_REQUIRED_PREMIUM ] ] );
+                throw new DownloadError( ERR_REQUIRED_PREMIUM );
             }
-            $this->writeLog(__FUNCTION__, 'Status non OK ! throw DownloadError', ['param' => ['message' => ERR_FILE_NO_EXIST]]);
-            throw new DownloadError(ERR_FILE_NO_EXIST);
+            $this->writeLog( __FUNCTION__, 'Status non OK ! throw DownloadError', [ 'param' => [ 'message' => ERR_FILE_NO_EXIST ] ] );
+            throw new DownloadError( ERR_FILE_NO_EXIST );
         }
-        if (!array_key_exists('url', $data)) {
-            $this->writeLog(__FUNCTION__, 'Pas d\'url dans la réponse ! throw DownloadError', ['param' => ['message' => ERR_BROKEN_LINK]]);
-            throw new DownloadError(ERR_BROKEN_LINK);
+        if (!array_key_exists( 'url', $data )) {
+            $this->writeLog( __FUNCTION__, 'Pas d\'url dans la réponse ! throw DownloadError', [ 'param' => [ 'message' => ERR_BROKEN_LINK ] ] );
+            throw new DownloadError( ERR_BROKEN_LINK );
         }
 
-        return $data['url'];
+        return $data[ 'url' ];
     }
 
     /**
      * @throws \DownloadError
      */
-    private function getFileName($url_original, $url_download = null)
-    {
+    private function getFileName($url_original, $url_download = null) {
         $p_data    = [
             'url' => $url_original,
         ];
         $end_point = 'https://api.1fichier.com/v1/file/info.cgi';
-        $response  = $this->callApi($end_point, $p_data);
-        $this->writeLog(__FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response);
-        $data = json_decode($response, true);
-        $this->writeLog(__FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data);
+        $response  = $this->callApi( $end_point, $p_data );
+        $this->writeLog( __FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response );
+        $data = json_decode( $response, true );
+        $this->writeLog( __FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data );
         if (null === $data || false === $data) {
-            $this->writeLog(__FUNCTION__, 'Data non valide ! throw DownloadError', ['param' => ['message' => ERR_UNKNOWN]]);
+            $this->writeLog( __FUNCTION__, 'Data non valide ! throw DownloadError', [ 'param' => [ 'message' => ERR_UNKNOWN ] ] );
             // on fallback sur l'autre methode
             if ($url_download) {
-                return $this->getFilenameFromUrl($url_download);
+                return $this->getFilenameFromUrl( $url_download );
             }
-            throw new DownloadError(ERR_UNKNOWN);
+            throw new DownloadError( ERR_UNKNOWN );
         }
-        if (!array_key_exists('filename', $data)) {
-            $this->writeLog(__FUNCTION__, 'Pas de filename dans la réponse ! throw DownloadError', ['param' => ['message' => ERR_UNKNOWN]]);
+        if (!array_key_exists( 'filename', $data )) {
+            $this->writeLog( __FUNCTION__, 'Pas de filename dans la réponse ! throw DownloadError', [ 'param' => [ 'message' => ERR_UNKNOWN ] ] );
             // on fallback sur l'autre methode
             if ($url_download) {
-                return $this->getFilenameFromUrl($url_download);
+                return $this->getFilenameFromUrl( $url_download );
             }
-            throw new DownloadError(ERR_UNKNOWN);
+            throw new DownloadError( ERR_UNKNOWN );
         }
-        return $data['filename'];
+        return $data[ 'filename' ];
     }
 
 
@@ -388,26 +385,24 @@ class OneFichierFileHosting
      * @return void
      */
     private
-    function writeLog($function, $message, $data = null)
-    {
-        $date = (new DateTime())->format(DATE_RFC3339_EXTENDED);
+    function writeLog($function, $message, $data = null) {
+        $date = ( new DateTime() )->format( DATE_RFC3339_EXTENDED );
         $row1 = "$date : $function : Message :  $message" . PHP_EOL;
-        $row2 = "$date : $function : Data : " . serialize($data) . PHP_EOL;
-        $this->writeCLILog($row1, $row2);
-        $this->writeRemoteLog($row1, $row2);
-        $this->writeLocalLog($row1, $row2);
+        $row2 = "$date : $function : Data : " . serialize( $data ) . PHP_EOL;
+        $this->writeCLILog( $row1, $row2 );
+        $this->writeRemoteLog( $row1, $row2 );
+        $this->writeLocalLog( $row1, $row2 );
     }
 
     private
-    function writeCLILog($row1, $row2)
-    {
+    function writeCLILog($row1, $row2) {
         if ("1" == $this->conf_cli_log) {
-            error_log(__CLASS__.'.'.__FUNCTION__.' as conf_cli_log == "1"');
-            fwrite(STDERR, $row1);
-            fwrite(STDERR, $row2);
+            error_log( __CLASS__ . '.' . __FUNCTION__ . ' as conf_cli_log == "1"' );
+            fwrite( STDERR, $row1 );
+            fwrite( STDERR, $row2 );
         }
         else {
-            error_log(__CLASS__.'.'.__FUNCTION__.' as conf_cli_log != "1"');
+            error_log( __CLASS__ . '.' . __FUNCTION__ . ' as conf_cli_log != "1"' );
         }
     }
 
@@ -418,15 +413,14 @@ class OneFichierFileHosting
      * @return void
      */
     private
-    function writeRemoteLog($row1, $row2)
-    {
+    function writeRemoteLog($row1, $row2) {
         if ($this->conf_remote_log === null) {
-            error_log(__CLASS__.'.'.__FUNCTION__.' as conf_remote_log === null');
+            error_log( __CLASS__ . '.' . __FUNCTION__ . ' as conf_remote_log === null' );
             return;
         }
-        error_log(__CLASS__.'.'.__FUNCTION__.' as conf_remote_log !== null');
+        error_log( __CLASS__ . '.' . __FUNCTION__ . ' as conf_remote_log !== null' );
         $curl = curl_init();
-        curl_setopt_array($curl, array(
+        curl_setopt_array( $curl, array(
             CURLOPT_URL            => $this->conf_remote_log,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING       => '',
@@ -435,17 +429,17 @@ class OneFichierFileHosting
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST  => 'POST',
-            CURLOPT_POSTFIELDS     => json_encode([
-                'row1' => $row1,
-                'row2' => $row2
-            ]),
+            CURLOPT_POSTFIELDS     => json_encode( [
+                                                       'row1' => $row1,
+                                                       'row2' => $row2
+                                                   ] ),
             CURLOPT_HTTPHEADER     => array(
                 'Content-Type: application/json',
                 'User-Agent: OneFichierCom/Synology'
             ),
-        ));
-        curl_exec($curl);
-        curl_close($curl);
+        ) );
+        curl_exec( $curl );
+        curl_close( $curl );
     }
 
     /**
@@ -455,18 +449,17 @@ class OneFichierFileHosting
      * @return void
      */
     private
-    function writeLocalLog($row1, $row2)
-    {
+    function writeLocalLog($row1, $row2) {
         // si local log désactivé, on sort de la fonction
         if ($this->conf_local_log != "1") {
-            error_log(__CLASS__.'.'.__FUNCTION__.' as conf_local_log != "1"');
+            error_log( __CLASS__ . '.' . __FUNCTION__ . ' as conf_local_log != "1"' );
             return;
         }
-        error_log(__CLASS__.'.'.__FUNCTION__.' as conf_local_log == "1"');
-        if (!file_exists($this->log_dir)) {
-            error_log('Folder '.$this->log_dir.' does not exist, trying to create');
-            if (!mkdir($this->log_dir, 0755, true)) {
-                error_log('Fail to create folder '.$this->log_dir);
+        error_log( __CLASS__ . '.' . __FUNCTION__ . ' as conf_local_log == "1"' );
+        if (!file_exists( $this->log_dir )) {
+            error_log( 'Folder ' . $this->log_dir . ' does not exist, trying to create' );
+            if (!mkdir( $this->log_dir, 0755, true )) {
+                error_log( 'Fail to create folder ' . $this->log_dir );
                 // on sort si on ne peut pas créer le repertoire de log
                 return;
             }
@@ -475,13 +468,14 @@ class OneFichierFileHosting
         // définition du fichier de log
         if (null === $this->log_id) {
             $log_path = $this->log_dir . DIRECTORY_SEPARATOR . 'default.log' . $this->log_id;
-        } else {
+        }
+        else {
             $log_path = $this->log_dir . DIRECTORY_SEPARATOR . $this->log_id . '.log';
         }
 
         // écriture de deux lignes de log, une avec le message et une avec les datas
-        file_put_contents($log_path, $row1, FILE_APPEND);
-        file_put_contents($log_path, $row2, FILE_APPEND);
+        file_put_contents( $log_path, $row1, FILE_APPEND );
+        file_put_contents( $log_path, $row2, FILE_APPEND );
     }
 
     /**
@@ -489,9 +483,8 @@ class OneFichierFileHosting
      * Est appelé à chaque fois que le constructeur de cette classe est appelé.
      */
     public
-    function cleanLog()
-    {
-        $log_file_a = scandir($this->log_dir);
+    function cleanLog() {
+        $log_file_a = scandir( $this->log_dir );
         // On définit le timestamp au dela duquel on supprime les logs.
         // Ici : tout ce qui a plus de 1 jour (24 x 3600 secondes)
         $timestamp_max = time() - 3600 * 24;
@@ -500,9 +493,9 @@ class OneFichierFileHosting
                 continue;
             }
             $log_file  = $this->log_dir . DIRECTORY_SEPARATOR . $log_file;
-            $filemtime = filemtime($log_file);
+            $filemtime = filemtime( $log_file );
             if ($filemtime < $timestamp_max) {
-                unlink($log_file);
+                unlink( $log_file );
             }
         }
     }
