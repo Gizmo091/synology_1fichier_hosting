@@ -1,7 +1,7 @@
 <?php
 /*
     @author : Mathieu Vedie
-	@Version : 4.7.3
+	@Version : 4.7.4
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -154,12 +154,14 @@ class OneFichierFileHosting {
             // Si c'est un lien déjà obtenu avec un token de téléchargement.
             if (preg_match( "/^https?:\/\/[a-zA-Z0-9]+(-[0-9]+)?\.1fichier\.com\/[a-zA-Z0-9]+$/", $this->Url )) {
                 $download_url = $this->Url;
+                $filename = $this->getFilenameFromUrl( $download_url );
             }
             else {
                 $download_url = $this->getDownloadLink( $this->Url );
                 $this->writeLog( __FUNCTION__, 'download_url : ', $download_url );
+                $filename = $this->getFileName($this->Url);
             }
-            $filename = $this->getFilenameFromUrl( $download_url );
+//            $filename = $this->getFilenameFromUrl( $download_url );
             if (null === $filename) {
                 $this->writeLog( __FUNCTION__, 'No filename returned', [ 'return' => [ DOWNLOAD_ERROR => ERR_FILE_NO_EXIST ] ] );
                 return [ DOWNLOAD_ERROR => ERR_FILE_NO_EXIST ];
