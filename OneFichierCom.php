@@ -1,7 +1,7 @@
 <?php
 /*
     @author : Mathieu Vedie
-	@Version : 4.7.0
+	@Version : 4.7.2
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -13,7 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
-    - 4.7.0 : Rename Class
+    - 4.7.0 : Renommage de la classe et amélioration des numéros d'erreur.
     - 4.6.0 : L’URL du fichier "verify" sur 1fichier, utilisée pour vérifier le bon fonctionnement de la connexion, est récupérée depuis le dépôt GitHub. Comme je n’ai plus de compte premium, cette URL est susceptible de changer régulièrement.
     - 4.5.0 : Recours aux requêtes curl HEAD pour obtenir le nom du fichier lorsque l'API refuse de renvoyer le nom du fichier (propriétaire verrouillé...)
     - 4.4.0 : Désactivation du controle du certifficat SSL.
@@ -33,6 +33,9 @@
 
 class DownloadError extends Exception
 {
+    public function __construct($code = ERR_UNKNOWN, Throwable $previous = null) {
+        parent::__construct( '', $code, $previous );
+    }
 }
 
 class OneFichierFileHosting
@@ -40,16 +43,16 @@ class OneFichierFileHosting
     const LOG_DIR = '/tmp/1fichier_dot_com';
     // fichier pour lequelle on récupere les informations afin de verifier que la clé d'api est correcte
     // fichier heberger sur le compte 1fichier du créateur du fichier host
-    private $Url;
-    //private $Username;
-    private $apikey;
+    public $Url;
+    //public $Username;
+    public $apikey;
 
-    private $log_dir;
-    private $log_id;
+    public $log_dir;
+    public $log_id;
 
-    private $conf_remote_log = null;
-    private $conf_cli_log    = null;
-    private $conf_local_log  = null;
+    public $conf_remote_log = null;
+    public $conf_cli_log    = null;
+    public $conf_local_log  = null;
 
 
     /**
@@ -152,21 +155,21 @@ class OneFichierFileHosting
         try {
             // Si c'est un lien déjà obtenu avec un token de téléchargement.
             if (preg_match("/^https:\/\/[a-zA-Z0-9]+(-[0-9]+)?\.1fichier\.com\/[a-zA-Z0-9]+$/", $this->Url)) {
-                $filename = $this->getFilenameFromUrl($this->Url);
-                if (null === $filename) {
-                    $this->writeLog(__FUNCTION__, 'No filename returned', ['return' => [DOWNLOAD_ERROR => ERR_UNKNOWN]]);
-                    return [DOWNLOAD_ERROR => ERR_UNKNOWN];
-                }
                 $download_url = $this->Url;
             } else {
                 $download_url = $this->getDownloadLink($this->Url);
                 $this->writeLog(__FUNCTION__, 'download_url : ', $download_url);
-                $filename = $this->getFileName($this->Url, $download_url);
-                $this->writeLog(__FUNCTION__, 'filename : ', $filename);
             }
+            $filename = $this->getFilenameFromUrl($download_url);
+            if (null === $filename) {
+                $this->writeLog(__FUNCTION__, 'No filename returned', ['return' => [DOWNLOAD_ERROR => ERR_FILE_NO_EXIST]]);
+                return [DOWNLOAD_ERROR => ERR_FILE_NO_EXIST];
+            }
+            $this->writeLog(__FUNCTION__, 'filename : ', $filename);
+
         } catch (DownloadError $e) {
-            $this->writeLog(__FUNCTION__, 'Catch DownloadError', ['return' => [DOWNLOAD_ERROR => ERR_UNKNOWN]]);
-            return [DOWNLOAD_ERROR => ERR_UNKNOWN];
+            $this->writeLog(__FUNCTION__, 'Catch DownloadError', ['return' => [DOWNLOAD_ERROR => $e->getCode()]]);
+            return [DOWNLOAD_ERROR => $e->getCode()];
         }
 
         $return = [
@@ -321,17 +324,22 @@ class OneFichierFileHosting
         $data = json_decode($response, true);
         $this->writeLog(__FUNCTION__, 'Réponse json de l\'api à ' . $end_point . ' ', $data);
         if (null === $data || false === $data) {
-            $this->writeLog(__FUNCTION__, 'Data non valide ! throw DownloadError', ['param' => ['message' => ERR_UNKNOWN]]);
-            throw new DownloadError(ERR_UNKNOWN);
+            $this->writeLog(__FUNCTION__, 'Data non valide ! throw DownloadError', ['param' => ['message' => ERR_BROKEN_LINK]]);
+            throw new DownloadError(ERR_BROKEN_LINK);
         }
 
         if ('OK' !== $data['status']) {
-            $this->writeLog(__FUNCTION__, 'Status non OK ! throw DownloadError', ['param' => ['message' => ERR_UNKNOWN]]);
-            throw new DownloadError(ERR_UNKNOWN);
+
+            if ($data['message'] === 'Must be a customer (Premium, Access) #236') {
+                $this->writeLog(__FUNCTION__, 'Status non OK ! throw DownloadError', ['param' => ['message' => ERR_REQUIRED_PREMIUM]]);
+                throw new DownloadError(ERR_REQUIRED_PREMIUM);
+            }
+            $this->writeLog(__FUNCTION__, 'Status non OK ! throw DownloadError', ['param' => ['message' => ERR_FILE_NO_EXIST]]);
+            throw new DownloadError(ERR_FILE_NO_EXIST);
         }
         if (!array_key_exists('url', $data)) {
-            $this->writeLog(__FUNCTION__, 'Pas d\'url dans la réponse ! throw DownloadError', ['param' => ['message' => ERR_UNKNOWN]]);
-            throw new DownloadError(ERR_UNKNOWN);
+            $this->writeLog(__FUNCTION__, 'Pas d\'url dans la réponse ! throw DownloadError', ['param' => ['message' => ERR_BROKEN_LINK]]);
+            throw new DownloadError(ERR_BROKEN_LINK);
         }
 
         return $data['url'];
@@ -392,8 +400,12 @@ class OneFichierFileHosting
     function writeCLILog($row1, $row2)
     {
         if ("1" == $this->conf_cli_log) {
+            error_log(__CLASS__.'.'.__FUNCTION__.' as conf_cli_log == "1"');
             fwrite(STDERR, $row1);
             fwrite(STDERR, $row2);
+        }
+        else {
+            error_log(__CLASS__.'.'.__FUNCTION__.' as conf_cli_log != "1"');
         }
     }
 
@@ -407,8 +419,10 @@ class OneFichierFileHosting
     function writeRemoteLog($row1, $row2)
     {
         if ($this->conf_remote_log === null) {
+            error_log(__CLASS__.'.'.__FUNCTION__.' as conf_remote_log === null');
             return;
         }
+        error_log(__CLASS__.'.'.__FUNCTION__.' as conf_remote_log !== null');
         $curl = curl_init();
         curl_setopt_array($curl, array(
             CURLOPT_URL            => $this->conf_remote_log,
@@ -443,10 +457,14 @@ class OneFichierFileHosting
     {
         // si local log désactivé, on sort de la fonction
         if ($this->conf_local_log != "1") {
+            error_log(__CLASS__.'.'.__FUNCTION__.' as conf_local_log != "1"');
             return;
         }
+        error_log(__CLASS__.'.'.__FUNCTION__.' as conf_local_log == "1"');
         if (!file_exists($this->log_dir)) {
+            error_log('Folder '.$this->log_dir.' does not exist, trying to create');
             if (!mkdir($this->log_dir, 0755, true)) {
+                error_log('Fail to create folder '.$this->log_dir);
                 // on sort si on ne peut pas créer le repertoire de log
                 return;
             }
