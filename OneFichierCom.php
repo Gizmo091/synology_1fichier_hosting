@@ -1,7 +1,7 @@
 <?php
 /*
     @author : Mathieu Vedie
-	@Version : 4.6.0
+	@Version : 4.7.0
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -13,6 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
+    - 4.7.0 : Rename Class
     - 4.6.0 : L’URL du fichier "verify" sur 1fichier, utilisée pour vérifier le bon fonctionnement de la connexion, est récupérée depuis le dépôt GitHub. Comme je n’ai plus de compte premium, cette URL est susceptible de changer régulièrement.
     - 4.5.0 : Recours aux requêtes curl HEAD pour obtenir le nom du fichier lorsque l'API refuse de renvoyer le nom du fichier (propriétaire verrouillé...)
     - 4.4.0 : Désactivation du controle du certifficat SSL.
@@ -34,7 +35,7 @@ class DownloadError extends Exception
 {
 }
 
-class SynoFileHosting
+class OneFichierFileHosting
 {
     const LOG_DIR = '/tmp/1fichier_dot_com';
     // fichier pour lequelle on récupere les informations afin de verifier que la clé d'api est correcte
