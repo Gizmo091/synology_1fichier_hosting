@@ -46,14 +46,19 @@ class OneFichierFileHosting {
     //public $Username;
     public $apikey;
 
+
     public $log_dir;
     public $log_id;
 
     public $conf_remote_log = null;
     public $conf_cli_log    = null;
     public $conf_local_log  = null;
+    public $conf_cdn = null;
 
 
+    protected function cdnIsEnabled() {
+        return ((int)$this->conf_cdn === 1);
+    }
     /**
      * @param string $endpoint
      * @param mixed  $data
@@ -320,7 +325,12 @@ class OneFichierFileHosting {
         $p_data    = [
             'url' => $url,
         ];
+
+        if ($this->cdnIsEnabled()) {
+            $p_data['cdn'] = 1;
+        }
         $end_point = 'https://api.1fichier.com/v1/download/get_token.cgi';
+        $this->writeLog( __FUNCTION__, 'Parametre d\'appel de l\'api à ' . $end_point . ' ', $p_data );
         $response  = $this->callApi( $end_point, $p_data );
         $this->writeLog( __FUNCTION__, 'Réponse brute de l\'api à ' . $end_point . ' ', $response );
         $data = json_decode( $response, true );

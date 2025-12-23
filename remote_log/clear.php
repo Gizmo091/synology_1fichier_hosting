@@ -20,6 +20,7 @@ $ip_a[1] = str_repeat("x",strlen($ip_a[1]));
 $ip_a[2] = str_repeat("x",strlen($ip_a[2]));
 $ip_sed = implode('\.',$ip_a);
 
-$cmd = "sed -i '/^\[$ip_sed\]/d' $log_path 2>&1";
+$ip_pattern = '[0-9]\{1,3\}\.x\{1,\}\.x\{1,\}\.[0-9]\{1,3\}';
+$cmd = "sed -i '/^\[$ip_sed\]/{:loop;\$d;N;/\\n\\[$ip_pattern\\]/!b loop;s/.*\\n//}' $log_path 2>&1";
 exec($cmd,$output,$res);
 redirect();
