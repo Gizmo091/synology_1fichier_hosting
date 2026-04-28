@@ -13,7 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
-    - 4.7.3 : Correction d'une erreur de recuperation des noms de fichiers sur les url direct en http
+    - 4.7.4 : Correction d'une erreur de recuperation des noms de fichiers sur les url direct en http
     - 4.7.0 : Renommage de la classe et amélioration des numéros d'erreur.
     - 4.6.0 : L’URL du fichier "verify" sur 1fichier, utilisée pour vérifier le bon fonctionnement de la connexion, est récupérée depuis le dépôt GitHub. Comme je n’ai plus de compte premium, cette URL est susceptible de changer régulièrement.
     - 4.5.0 : Recours aux requêtes curl HEAD pour obtenir le nom du fichier lorsque l'API refuse de renvoyer le nom du fichier (propriétaire verrouillé...)
