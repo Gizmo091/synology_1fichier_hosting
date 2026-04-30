@@ -22,6 +22,7 @@ Since release 4.0.0 the package is only usable by premium accounts due to API us
 - OneFichierCom(4.5.0).host : Fallback on curl HEAD requests to get filename when api refused to return file name (owner locked ...)
 - OneFichierCom(4.6.0).host : The URL for the "verify" file on 1fichier, used to verify that the connection is working properly, is retrieved from the GitHub repository. Since I no longer have a premium account, this URL is likely to change regularly.
 - OneFichierCom(4.7.2).host : Better error managment.
+- OneFichierCom(4.8.0).host : Support for already-tokenized CDN links (https://*.tb-cdn.st/dld/...?token=...). When such a link is pasted directly in DL Station, the API call to get_token.cgi is skipped and the filename is retrieved via a HEAD request.
 
 # CUSTOM CONFIGURATION 
 

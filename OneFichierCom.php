@@ -1,7 +1,7 @@
 <?php
 /*
     @author : Mathieu Vedie
-	@Version : 4.7.4
+	@Version : 4.8.0
 	@firstversion : 07/07/2019
 	@description : Support du compte gratuit, access, premium et CDN
 
@@ -13,6 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
+    - 4.8.0 : Support des liens CDN déjà tokenisés (*.tb-cdn.st/dld/...?token=...) collés directement dans DL Station. Le hostprefix accepte désormais aussi tb-cdn.st.
     - 4.7.4 : Correction d'une erreur de recuperation des noms de fichiers sur les url direct en http
     - 4.7.0 : Renommage de la classe et amélioration des numéros d'erreur.
     - 4.6.0 : L’URL du fichier "verify" sur 1fichier, utilisée pour vérifier le bon fonctionnement de la connexion, est récupérée depuis le dépôt GitHub. Comme je n’ai plus de compte premium, cette URL est susceptible de changer régulièrement.
@@ -142,6 +143,11 @@ class OneFichierFileHosting {
         if (isset( $log_id[ 1 ] )) {
             $this->log_id = $log_id[ 1 ];
         }
+        // Pour les liens CDN tokenisés (ex : https://nexus-070.ceur.tb-cdn.st/dld/id-xyz?token=...)
+        // on remplace le log_id par l'identifiant du segment /dld/ qui est plus lisible.
+        if (preg_match( '#/dld/([^/?]+)#', $this->Url, $m_dld )) {
+            $this->log_id = $m_dld[ 1 ];
+        }
         $this->writeLog( __FUNCTION__, 'Appel du constructeur de ' . __CLASS__, [ 'parameters' => [
             'Url'      => $Url,
             'Username' => $Username,
@@ -158,6 +164,11 @@ class OneFichierFileHosting {
         try {
             // Si c'est un lien déjà obtenu avec un token de téléchargement.
             if (preg_match( "/^https?:\/\/[a-zA-Z0-9]+(-[0-9]+)?\.1fichier\.com\/[a-zA-Z0-9]+$/", $this->Url )) {
+                $download_url = $this->Url;
+                $filename = $this->getFilenameFromUrl( $download_url );
+            }
+            // Si c'est un lien CDN déjà tokenisé (ex : https://nexus-070.ceur.tb-cdn.st/dld/id-xyz?token=...)
+            elseif (preg_match( "/^https?:\/\/[^\/]+\.tb-cdn\.st\/dld\/[^?]+\?token=.+$/", $this->Url )) {
                 $download_url = $this->Url;
                 $filename = $this->getFilenameFromUrl( $download_url );
             }
