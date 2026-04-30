@@ -13,7 +13,7 @@
         or directly use bash.sh ou bash_with_docker.sh
 
     Update :
-    - 4.8.0 : Support des liens CDN déjà tokenisés (*.tb-cdn.st/dld/...?token=...) collés directement dans DL Station. Le hostprefix accepte désormais aussi tb-cdn.st.
+    - 4.8.0 : Support des liens CDN déjà tokenisés (*.tb-cdn.st/dld/...?token=...) collés directement dans DL Station. Le hostprefix accepte désormais aussi tb-cdn.st. La récupération du nom de fichier (getFilenameFromUrl) tente d'abord HEAD puis bascule en GET Range:bytes=0-0 quand le serveur ne renvoie Content-Disposition que sur GET (cas du CDN Nexus).
     - 4.7.4 : Correction d'une erreur de recuperation des noms de fichiers sur les url direct en http
     - 4.7.0 : Renommage de la classe et amélioration des numéros d'erreur.
     - 4.6.0 : L’URL du fichier "verify" sur 1fichier, utilisée pour vérifier le bon fonctionnement de la connexion, est récupérée depuis le dépôt GitHub. Comme je n’ai plus de compte premium, cette URL est susceptible de changer régulièrement.
@@ -205,36 +205,65 @@ class OneFichierFileHosting {
             'url' => $url,
         ] ] );
 
-        // Initialiser cURL
+        // Première tentative : requête HEAD (économique).
+        $filename = $this->fetchFilenameViaCurl( $url, 'HEAD' );
+        if (null !== $filename) {
+            return $filename;
+        }
+        // Fallback : certains CDN (ex : Nexus *.tb-cdn.st) ne renvoient
+        // Content-Disposition que sur GET. On retente avec un GET Range: 0-0
+        // qui ne télécharge qu'un seul octet mais expose les bons headers.
+        return $this->fetchFilenameViaCurl( $url, 'GET' );
+    }
+
+    /**
+     * @param string $url
+     * @param string $method 'HEAD' ou 'GET' (avec Range: 0-0)
+     *
+     * @return string|null
+     */
+    private function fetchFilenameViaCurl($url, $method) {
+        $this->writeLog( __FUNCTION__, 'Debut de la methode : ', [ 'parameters' => [
+            'url'    => $url,
+            'method' => $method,
+        ] ] );
+
         $ch = curl_init();
-
-        // Configurer les options de cURL pour envoyer une requête HEAD
         curl_setopt( $ch, CURLOPT_URL, $url );
-        curl_setopt( $ch, CURLOPT_NOBODY, true ); // Ne récupère que les en-têtes
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-        curl_setopt( $ch, CURLOPT_HEADER, true );         // Inclure les en-têtes dans la sortie
-        curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true ); // Suivre les redirections
-        curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'HEAD' );
+        curl_setopt( $ch, CURLOPT_HEADER, true );
+        curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+        curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+        curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
 
-        // Exécuter la requête cURL
+        if ($method === 'HEAD') {
+            curl_setopt( $ch, CURLOPT_NOBODY, true );
+            curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'HEAD' );
+        }
+        else {
+            // GET 1 octet : suffisant pour récupérer Content-Disposition
+            curl_setopt( $ch, CURLOPT_HTTPHEADER, [ 'Range: bytes=0-0' ] );
+        }
+
         $response = curl_exec( $ch );
 
         if (curl_errno( $ch )) {
-            $this->writeLog( __FUNCTION__, 'Curl Error', [ 'error'  => curl_error( $ch ),
+            $this->writeLog( __FUNCTION__, 'Curl Error', [ 'method' => $method,
+                                                           'error'  => curl_error( $ch ),
                                                            'return' => null ] );
             curl_close( $ch );
             return null;
         }
 
-        // Fermer la session cURL
         curl_close( $ch );
 
-        // Utiliser une expression régulière pour extraire le nom du fichier
         if (preg_match( '/filename="(.*?)"/', $response, $matches )) {
-            $this->writeLog( __FUNCTION__, 'Filename found', [ 'return' => $matches[ 1 ] ] );
+            $this->writeLog( __FUNCTION__, 'Filename found', [ 'method' => $method,
+                                                               'return' => $matches[ 1 ] ] );
             return $matches[ 1 ];
         }
-        $this->writeLog( __FUNCTION__, 'No filename', [ 'return'   => null,
+        $this->writeLog( __FUNCTION__, 'No filename', [ 'method'   => $method,
+                                                        'return'   => null,
                                                         'response' => $response ] );
         return null;
     }
